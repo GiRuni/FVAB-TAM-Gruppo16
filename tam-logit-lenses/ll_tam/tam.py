@@ -616,5 +616,6 @@ def TAM(tokens, vision_shape, logit_list, special_ids, vision_input, \
     if save_fn != '' and vis_token_idx < (len(txt_all) - 1) and isinstance(vis_img, np.ndarray):
         os.makedirs(os.path.dirname(save_fn), exist_ok=True)
         cv2.imwrite(save_fn, vis_img)
+        cv2.imwrite(os.path.join(os.path.dirname(save_fn), os.path.splitext(os.path.basename(save_fn))[0] + "_raw_heatmap.png"), img_map)
     
     return img_map
