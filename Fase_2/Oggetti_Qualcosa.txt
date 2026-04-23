@@ -1,0 +1,215 @@
+﻿1. 000000000000785
+   1. jacket + red
+   2. person + skiing
+   3. person + on
+2. 000000000000872
+   1. shirt + white
+   2. person + playing
+   3. person + behind
+3. 000000000001296
+   1. phone + white
+   2. person + holding
+   3.
+4. 000000000032081
+   1. dress + white
+   2. woman + playing
+   3.
+5. 000000000010363
+   1. car + black
+   2. cat + standing
+   3. cat + on
+6. 000000000011699
+   1. shirt + red
+   2. person + posing
+   3. person + left
+7. 000000000297353
+   1. shirt + black
+   2. person + playing
+   3. person + on
+8. 000000000297595
+   1. wave + big
+   2. person + surfing
+   3. person + on
+9. 000000000029397
+   1. pants + orange
+   2. person standing
+   3. person + on
+10. 000000000040036
+   1. horse + brown
+   2. horse + jumping
+   3. girl + top
+11. 000000000047121
+   1. cat + black
+   2. cat + drinking
+   3. cat + on
+12. 000000000047585
+   1. dress + white
+   2. person + holding
+   3. person + under
+13. 000000000052017
+   1. plane + orange
+   2. plane + flying
+   3. plane + in
+14. 52891
+   1. disk + yellow
+   2. dog + holding
+   3. dog + on
+15. 61747
+   1. jacket + purple
+   2. person + skiing
+   3. person + on
+16. 72813
+   1. dog + brown
+   2. dog + sitting
+   3. dog + on
+17. 78823
+   1. car + brown
+   2. dog + sitting
+   3. dog + on
+18. 301867
+   1. umbrella + white
+   2. person + talking
+   3. person + under
+19. 302990
+   1.    
+   2. person + surfing
+   3. person + behind
+20. 303499
+   1. horse + black
+   2. person + riding
+   3. horse + left
+21. 304560
+   1. cat + black
+   2. cat + sitting
+   3. cat + on
+22. 308165
+   1. pants + black
+   2. person + skating
+   3. person + over
+23. 309452
+   1. bird + yellow
+   2. bird + sitting
+   3. bird + on
+24. 309964
+   1. umbrella + blue
+   2. person + sitting
+   3. person + under
+25. 311180
+   1. scissor + green
+   2. hand + holding
+   3. scissor + on
+26. 311394
+   1. toothbrush + blue
+   2. baby + holding
+27. 311518
+   1. boat + green
+   2. boat + floating
+   3. boat + in
+28. 311928
+   1. hat + white
+   2. person + playing
+   3. ball + right of
+29. 311950
+   1. table + white
+   2. hotdog + resting
+   3. hotdog + on
+30. 313034
+   1. shirt + green
+   2. person + holding
+   3. person + right of
+31. 313783
+   1. hamburger + cooked
+   2.    
+   3. hamburger + in front of
+32. 322163
+   1. shirt + white
+   2. person + cooking
+   3. person + behind
+33. 327601
+   1. dress + blue
+   2. person + sitting
+   3. person + on
+34. 329455
+   1. pizza + cooked
+   2. person + sitting
+   3. pizza + on
+35. 334530
+   1. suit + dark
+   2. person + surfing
+   3. person + inside
+36. 335450
+   1. horse + brown
+   2. horse + standing
+   3. horse + behind
+37. 337055
+   1. luggage + blue
+   2. person + sitting
+   3. person + on
+38. 346905
+   1. elephant + muddy
+   2. elephant + standing
+   3. elephant + between
+39. 347930
+   1. dog + brown
+   2. dog + sitting
+   3. dog + on
+40. 348488
+   1. horse + black
+   2. horse + running
+   3. person + behind
+41. 348708
+   1. bowl + white
+   2.    
+   3. banana + left of
+42. 350679
+   1. dress + white
+   2. bride + cutting
+   3. people + behind
+43. 353051
+   1. horse + brown
+   2. horse + eating
+   3. person + left
+44. 353970
+   1. cat + gray
+   2. cat + sitting
+   3. cat + on
+45. 355905
+   1. dog + white
+   2. dog + walking
+   3. dog + on
+46. 360661
+   1. horse + brown
+   2. person + riding
+   3. horse + on
+47. 361571
+   1. hat + beige
+   2. dog + looking
+   3. hat + on
+48. 364126
+   1. wave + big
+   2. person + surfing
+   3. person + on
+49. 374551
+   1. bird + brown
+   2. bird + sitting
+   3. bird + on
+50. 383337
+   1. box + small
+   2. hand + grabbing
+   3. pastry + in
+51. 000000000002149
+   1. apple + green
+   2.
+   3. apple + on
+52. 000000000007784
+   1. parasail + white
+   2. parasail + flying
+   3. parasail + in
+53. 10764
+   1. person + black
+   2. person + crouching
+   3. person + on
+54. 11051
+   1. dress + black
+   2. person + adjusting
+   3. person + right
