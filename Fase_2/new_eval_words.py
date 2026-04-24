@@ -926,13 +926,13 @@ def _check_norm(model):
 # ---------------------------------------------------------------------------
 
 MODEL_NAME  = "Qwen/Qwen2-VL-2B-Instruct"
-IMAGES_DIR  = Path("../tam-logit-lenses/ll_tam/test")          # directory with test images
-MASKS_DIR   = Path("../tam-logit-lenses/ll_tam/masks")              # masks/<stem>/<obj>.png
-CONFIG_PATH = Path("../tam-logit-lenses/ll_tam/rel_config.yaml")
-OUT_DIR     = Path("../tam-logit-lenses/ll_tam/results")
-VIS_DIR     = Path("../tam-logit-lenses/ll_tam/vis_results")        # TAM heatmaps per layer/step
-GRIDS_DIR   = Path("../tam-logit-lenses/ll_tam/token_grids")        # per-token cross-layer grids
-QUERY_TXT   = Path("Oggetti_Qualcosa.txt") # blocks: image_id + up to 3 lines object+word
+IMAGES_DIR  = Path(r"/content/FVAB-TAM-Gruppo16/tam-logit-lenses/ll_tam/test")          # directory with test images
+MASKS_DIR   = Path(r"/content/FVAB-TAM-Gruppo16/tam-logit-lenses/ll_tam/masks")              # masks/<stem>/<obj>.png
+CONFIG_PATH = Path(r"/content/FVAB-TAM-Gruppo16/tam-logit-lenses/ll_tam/rel_config.yaml")
+OUT_DIR     = Path(r"/content/FVAB-TAM-Gruppo16/tam-logit-lenses/ll_tam/results")
+VIS_DIR     = Path(r"/content/FVAB-TAM-Gruppo16/tam-logit-lenses/ll_tam/vis_results")        # TAM heatmaps per layer/step
+GRIDS_DIR   = Path(r"/content/FVAB-TAM-Gruppo16/tam-logit-lenses/ll_tam/token_grids")        # per-token cross-layer grids
+QUERY_TXT   = Path(r"/content/FVAB-TAM-Gruppo16/Fase_2/Oggetti_Qualcosa.txt") # blocks: image_id + up to 3 lines object+word
 
 PROMPT      = "Describe this image in two sentences."
 MAX_NEW_TOKENS = 256
