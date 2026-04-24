@@ -932,7 +932,7 @@ CONFIG_PATH = Path("../tam-logit-lenses/ll_tam/rel_config.yaml")
 OUT_DIR     = Path("../tam-logit-lenses/ll_tam/results")
 VIS_DIR     = Path("../tam-logit-lenses/ll_tam/vis_results")        # TAM heatmaps per layer/step
 GRIDS_DIR   = Path("../tam-logit-lenses/ll_tam/token_grids")        # per-token cross-layer grids
-QUERY_TXT   = Path("../tam-logit-lenses/ll_tam/Oggetti_Qualcosa.txt") # blocks: image_id + up to 3 lines object+word
+QUERY_TXT   = Path("Oggetti_Qualcosa.txt") # blocks: image_id + up to 3 lines object+word
 
 PROMPT      = "Describe this image in two sentences."
 MAX_NEW_TOKENS = 256
