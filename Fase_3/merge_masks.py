@@ -3,36 +3,77 @@ import numpy as np
 import sys
 import os
 
-def combine_masks(mask_path1, mask_path2, output_path):
-    # Load masks as grayscale
-    mask1 = cv2.imread(mask_path1, cv2.IMREAD_GRAYSCALE)
-    mask2 = cv2.imread(mask_path2, cv2.IMREAD_GRAYSCALE)
+def combine_multiple_masks(mask_paths):
+    masks = []
 
-    if mask1 is None or mask2 is None:
-        raise ValueError("Error loading one of the mask images.")
+    for path in mask_paths:
+        mask = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
 
-    # Ensure same size
-    if mask1.shape != mask2.shape:
+        if mask is None:
+            raise ValueError(f"Error loading mask: {path}")
+
+        # Binarize
+        _, mask = cv2.threshold(mask, 127, 255, cv2.THRESH_BINARY)
+        masks.append(mask)
+
+    # Check dimensions
+    shapes = [m.shape for m in masks]
+    if len(set(shapes)) != 1:
         raise ValueError("Masks must have the same dimensions.")
 
-    # Convert to binary (optional, if masks are not already 0/255)
-    _, mask1 = cv2.threshold(mask1, 127, 255, cv2.THRESH_BINARY)
-    _, mask2 = cv2.threshold(mask2, 127, 255, cv2.THRESH_BINARY)
+    # Combine all masks
+    combined = np.zeros_like(masks[0], dtype=np.uint16)
+    for m in masks:
+        combined += m.astype(np.uint16)
 
-    # Sum masks (clip to 255 to avoid overflow)
-    combined = np.clip(mask1.astype(np.uint16) + mask2.astype(np.uint16), 0, 255).astype(np.uint8)
+    combined = np.clip(combined, 0, 255).astype(np.uint8)
+    return combined
 
-    # Save result
-    cv2.imwrite(output_path, combined)
-    print(f"Combined mask saved to: {output_path}")
 
 if __name__ == "__main__":
-    if len(sys.argv) != 4:
-        print("Usage: python combine_masks.py mask1.png mask2.png output.png")
+    if len(sys.argv) != 2:
+        print("Usage: python merge_masks.py <root_masks_folder>")
         sys.exit(1)
 
-    mask1_path = sys.argv[1]
-    mask2_path = sys.argv[2]
-    output_path = sys.argv[3]
+    root_dir = sys.argv[1]
+    output_dir = os.path.join(root_dir, "merged_seg_label")
 
-    combine_masks(mask1_path, mask2_path, output_path)
+    os.makedirs(output_dir, exist_ok=True)
+
+    for image_id in os.listdir(root_dir):
+        image_folder = os.path.join(root_dir, image_id)
+
+        # Skip output folder
+        if image_id == "merged_seg_label":
+            continue
+
+        if not os.path.isdir(image_folder):
+            continue
+
+        # Collect mask files
+        mask_files = [
+            os.path.join(image_folder, f)
+            for f in os.listdir(image_folder)
+            if f.lower().endswith((".png", ".jpg", ".jpeg", ".bmp"))
+        ]
+
+        if len(mask_files) == 0:
+            print(f"Skipping {image_id}: no masks found")
+            continue
+
+        try:
+            if len(mask_files) == 1:
+                # Single mask → just load & binarize
+                mask = cv2.imread(mask_files[0], cv2.IMREAD_GRAYSCALE)
+                _, combined_mask = cv2.threshold(mask, 127, 255, cv2.THRESH_BINARY)
+            else:
+                # Multiple masks → combine all
+                combined_mask = combine_multiple_masks(mask_files)
+
+            output_path = os.path.join(output_dir, f"{image_id}.png")
+            cv2.imwrite(output_path, combined_mask)
+
+            print(f"[OK] {image_id} ({len(mask_files)} masks) -> {output_path}")
+
+        except Exception as e:
+            print(f"[ERROR] {image_id}: {e}")
