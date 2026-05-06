@@ -95,7 +95,7 @@ def main() -> None:
         script_dir / "annotations" / "instances_minival2014.json",
         Path.cwd() / "instances_minival2014.json",
         Path.cwd() / "annotations" / "instances_minival2014.json",
-        Path("/content/drive/MyDrive/data/coco2014/annotations/instances_minival2014.json"),
+        Path(r"/content/FVAB-TAM-Gruppo16/tam-logit-lenses/ll_tam/data/coco2014/annotations/instances_minival2014.json"),
     )
     output_dir = resolve_output_dir(instances_json)
 
