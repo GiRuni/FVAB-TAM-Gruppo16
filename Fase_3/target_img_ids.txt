@@ -1,0 +1,220 @@
+﻿1. 000000000285
+    1. bear + brown (587562)
+    2. 
+    3. 
+2. 000000000872
+   1. 
+   2. person + playing (560228, 559508)
+   3. person + behind + person (560228, 559508)
+3. 000000001296
+   1. cell phone + white (324614)
+   2. person + holding (470530)
+   3. 
+4. 000000032081
+   1.
+   2. person + playing (469488)
+   3. 
+5. 000000010363
+   1. car + black (138210)
+   2. cat + standing (47902)
+   3. cat + on + car (47902, 138210)
+6. 000000011699
+   1. person + red (516637)
+   2. person + posing (509752)
+   3. person + left of + person (516637, 509752)
+7. 000000297353
+   1. person + black (428335)
+   2. person + playing (428335)
+   3. person + on + bed (428335, 318827)
+8. 000000297595
+   1. person + black (424292)
+   2. person + surfing (424292)
+   3. person + on + surfboard (424292, 650409)
+9. 000000029397
+   1. person + orange (449985)
+   2. person + standing (449985)
+   3. person + on + bench (449985, 575411)
+10. 000000040036
+   1. horse + brown (56237)
+   2. horse + jumping (56237)
+   3. person + top + horse (197377, 56237)
+11. 000000047121
+   1. cat + black (51419)
+   2. cat + drinking (51419)
+   3. cat + on + sink (51419, 1129860)
+12. 000000047585
+   1. person + white (447745)
+   2. person + holding (498525)
+   3. person + under + umbrella ((498525, 447745), 279558)
+13. 000000052017
+   1. airplane + orange (160713)
+   2. airplane + flying (160713)
+   3. 
+14. 000000052891
+   1. frisbee + yellow (601915)
+   2. dog + holding (13820)
+   3. 
+15. 000000061747
+   1. person + purple (447752)
+   2. person + skiing (447752)
+   3. person + on + skis (447752, 2199903)
+16. 000000072813
+   1. dog + brown (9092)
+   2. dog + sitting (9092)
+   3. dog + on + bed (9092, 316221)
+17. 000000078823
+   1. car + brown (133097)
+   2. dog + sitting (7544)
+   3. dog + on + car (7544,133097)
+18. 000000301867
+   1. umbrella + white (281970)
+   2. person + talking (1739135, 1753039, 1762234)
+   3. person + under + umbrella ((1739135, 1753039, 1762234), 281970)
+19. 000000302990
+   1. 
+   2. person + surfing (422313, 422600)
+   3. person + behind + person (422313, 422600)
+20. 000000303499
+   1. horse + black (273663)
+   2. person + riding (190951, 209358)
+   3. horse + left of + horse (273663, 54549)
+21. 000000304560
+   1. cat + black (52709)
+   2. cat + sitting (52709)
+   3. 
+22. 000000308165
+   1. person + black (466161)
+   2. person + skating (466161)
+   3. person + over + skateboard (466161, 639098)
+23. 000000309452
+   1. bird + yellow (40234)
+   2. bird + sitting (40234)
+   3. 
+24. 000000309964
+   1. umbrella + blue
+   2. person + sitting
+   3. person + under + umbrella ((435518, 477253), 279725)
+25. 000000311180
+   1. scissors + green (1158274)
+   2. person + holding (1724916)
+   3. scissors + on + person (1158274, 1724916)
+26. 000000311394
+   1. toothbrush + blue (341957)
+   2. person + holding + toothbrush (448609, 341957)
+   3. person + behind + toothbrush (448609, 341957)
+27. 000000311518
+   1. boat + green (178773)
+   2. boat + floating (178773)
+   3. 
+28. 000000311928
+   1. person + white (1226757)
+   2. person + playing (1226757)
+   3. sports ball + right of + person (301276, 1226757)
+29. 000000311950
+   1. hot dog + red (1067843)
+   2. hot dog + resting (1067843)
+   3.
+30. 000000313034
+   1. person + green (441350)
+   2. person + holding (432686)
+   3. person + right of + person (441350, 432686)
+31. 000000313783
+   1. fork + clean (688951)
+   2. 
+   3. fork + right of + carrot (688951, (1064070, 1064196, 1064612, 1065235, 1065381, 1065602)
+32. 000000322163
+   1. person + white (492721, 543239, 512673)
+   2. person + cooking (543239, (1570875, 1899216, 1537639))
+   3. oven + behind + person (2139027, 543239)
+33. 000000327601
+   1. person + blue (439559)
+   2. person + sitting (439559)
+   3. person + on + chair (439559, 1581607)
+34. 000000329455
+   1. pizza + cooked (1072838)
+   2. person + sitting (2161999, 527705)
+   3. pizza + on + dining table (1072838, 390743)
+35. 000000334530
+   1. person + dark (1726970)
+   2. person + surfing (1726970)
+   3. person + over + surfboard (1726970, 651097)
+36. 000000335450
+   1. horse + brown (57471)
+   2. horse + standing (57471)
+   3. horse + behind + horse (58058, 57471)
+37. 000000337055
+   1. suitcase + blue (1183941)
+   2. person + sitting (425488)
+   3. person + behind + suitcase (425488, 1183941)
+38. 000000346905
+   1. elephant + muddy (584349, 581487, 585924)
+   2. elephant + standing (584349, 581487, 585924)
+   3. elephant + between + elephant (584349, (581487, 585924))
+39. 000000347930
+   1. dog + brown (5995)
+   2. dog + sitting (5995)
+   3. dog + on + couch (5995, 115848)
+40. 000000348488
+   1. horse + black (58744, 59715, 273733, 274344)
+   2. horse + running (58744, 59715, 273733, 274344)
+   3. horse + behind + horse (58744, 59715, 273733, 274344)
+41. 000000348708
+   1. bowl + white (715349)
+   2. 
+   3. banana + left of + bowl (1045069, 715349)
+42. 000000350679
+   1. person + white (462141)
+   2. person + cutting (462141, 1086256)
+   3.
+43. 000000353051
+   1. horse + brown (225442)
+   2. horse + eating (225442)
+   3. person + left of + horse (54581, 225442)
+44. 000000353970
+   1. cat + gray (47822)
+   2. cat + sitting (47822)
+   3. cat + on + chair (47822, 101158)
+45. 000000355905
+   1. dog + white (2028)
+   2. dog + walking (2028)
+   3. 
+46. 000000360661
+   1. horse + brown (54758, 58261, 60652)
+   2. person + riding (203614, 210029, 1745735)
+   3. person + on + horse ((203614, 210029, 1745735), (54758, 58261, 60652))
+47. 000000361571
+   1. dog + beige (3034)
+   2. dog + looking (3034)
+   3. 
+48. 000000364126
+   1. person + white (437585)
+   2. person + surfing (437585)
+   3. person + on + surfboard (437585, 650969)
+49. 000000374551
+   1. bird + brown (42003)
+   2. bird + sitting (42003)
+   3. 
+50. 000000383337
+   1. donut + glazed (1078483, 1079190, 1080277, 1572924, 1573350, 1573391, 1573773, 2118628)
+   2. person + grabbing (1719075, 1080277)
+   3. 
+51. 000000002149
+   1. apple + green (1047376, 709513)
+   2. 
+   3. apple + inside + bowl (1047376, 709513)
+52. 000000007784
+   1. kite + white (623269)
+   2. kite + flying (623269)
+   3. 
+53. 000000010764
+   1. person + black (471070)
+   2. person + crouching (471070)
+   3. 
+54. 000000011051
+   1. person + black (539627)
+   2. person + adjusting (530192)
+   3. person + right of + person (539627, 530192)
+55. 000000000785
+   1. person + red (442619)
+   2. person + skiing (442619)
+   3. person + on + skis (442619, 609541)
