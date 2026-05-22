@@ -17,8 +17,6 @@ Logit-lens mode: set --all_layers to run across all layers.
 
 import csv
 import concurrent.futures
-import json
-import os
 import re
 import sys
 import math
@@ -144,19 +142,48 @@ def _find_target_final_step(step_word_map: dict, target_word: str, token_labels:
     if not target_n:
         return -1, []
 
-    def _match_token_span(parts: list[str]) -> tuple[int, list[str]]:
-        """Return the last token index and matched labels for a contiguous span."""
+    def _match_token_sequence(parts: list[str]) -> tuple[int, list[str]]:
+        """Return the last token index and matched labels for an ordered match with gaps."""
         if not parts:
             return -1, []
 
-        for i in range(len(token_labels) - len(parts) + 1):
-            match = True
-            for j, part in enumerate(parts):
-                if _norm_word(token_labels[i + j]) != part:
-                    match = False
+        matched_indices = []
+        search_start = 0
+        for part in parts:
+            found = -1
+            for idx in range(search_start, len(token_labels)):
+                if _norm_word(token_labels[idx]) == part:
+                    found = idx
                     break
-            if match:
-                return i + len(parts) - 1, token_labels[i:i + len(parts)]
+            if found < 0:
+                return -1, []
+            matched_indices.append(found)
+            search_start = found + 1
+
+        return matched_indices[-1], [token_labels[idx] for idx in matched_indices]
+
+    def _match_token_sequence_reversed(parts: list[str]) -> tuple[int, list[str]]:
+        reversed_parts = list(reversed(parts))
+        if reversed_parts == parts:
+            return -1, []
+        return _match_token_sequence(reversed_parts)
+
+    def _match_single_part(parts: list[str]) -> tuple[int, list[str]]:
+        if not parts:
+            return -1, []
+
+        target_part = parts[-1]
+        best_match = -1
+        for idx, token in enumerate(token_labels):
+            tok_norm = _norm_word(token)
+            if tok_norm == target_part:
+                return idx, [token]
+            if (len(tok_norm) >= 3 and len(target_part) >= 3 and
+                    (tok_norm.startswith(target_part[:3]) or target_part.startswith(tok_norm[:3]))):
+                if best_match == -1:
+                    best_match = idx
+        if best_match >= 0:
+            return best_match, [token_labels[best_match]]
         return -1, []
 
     # Check if this is a spatial relation phrase (contains "+")
@@ -166,42 +193,23 @@ def _find_target_final_step(step_word_map: dict, target_word: str, token_labels:
         parts = [p for p in parts if p]  # Remove empty parts
         
         if len(parts) > 1:
-            # Try to find consecutive matching tokens in the written order first.
-            i, matched_labels = _match_token_span(parts)
+            # Match the parts in order, but allow other tokens to appear between them.
+            i, matched_labels = _match_token_sequence(parts)
             if i >= 0:
-                print(f"    [MATCH SPATIAL] target_word='{target_word}' -> steps {i-len(parts)+1}-{i} (tokens: {matched_labels})")
+                print(f"    [MATCH SPATIAL] target_word='{target_word}' -> step {i} (tokens: {matched_labels})")
                 return i, matched_labels
 
             # Some generations flip the order of the same words (for example: 'brown bear').
-            reversed_parts = list(reversed(parts))
-            if reversed_parts != parts:
-                i, matched_labels = _match_token_span(reversed_parts)
-                if i >= 0:
-                    print(f"    [MATCH SPATIAL REVERSED] target_word='{target_word}' -> steps {i-len(parts)+1}-{i} (tokens: {matched_labels})")
-                    return i, matched_labels
-            
+            i, matched_labels = _match_token_sequence_reversed(parts)
+            if i >= 0:
+                print(f"    [MATCH SPATIAL REVERSED] target_word='{target_word}' -> step {i} (tokens: {matched_labels})")
+                return i, matched_labels
+
             # Fallback: try to find any part of the spatial relation (including morphological variants)
-            # Try matching the most significant part (usually the last one, the object/descriptor)
-            most_significant = parts[-1] if len(parts) > 1 else parts[0]
-            best_match = -1
-            
-            for i in range(len(token_labels)):
-                tok_norm = _norm_word(token_labels[i])
-                # Exact match
-                if tok_norm == most_significant:
-                    best_match = i
-                    print(f"    [MATCH SPATIAL EXACT] target_word='{target_word}' -> step {i} (token: {token_labels[i]})")
-                    return i
-                # Morphological match: check if they share a common stem
-                # e.g., "skis" matches "skiing" (both contain "ski")
-                elif (len(tok_norm) >= 3 and len(most_significant) >= 3 and 
-                      (tok_norm.startswith(most_significant[:3]) or most_significant.startswith(tok_norm[:3]))):
-                    if best_match == -1:  # Keep first partial match
-                        best_match = i
-            
-            if best_match >= 0:
-                print(f"    [MATCH SPATIAL MORPHO] target_word='{target_word}' -> step {best_match} (token: {token_labels[best_match]})")
-                return best_match, [token_labels[best_match]]
+            i, matched_labels = _match_single_part(parts)
+            if i >= 0:
+                print(f"    [MATCH SPATIAL FALLBACK] target_word='{target_word}' -> step {i} (tokens: {matched_labels})")
+                return i, matched_labels
 
     candidates = []
     for step, meta in step_word_map.items():
