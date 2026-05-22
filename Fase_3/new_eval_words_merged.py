@@ -943,12 +943,13 @@ def evaluate_image(ctx: dict, obj_masks: dict, spatial_cfg: dict,
         def run_query(q: dict):
             obj_name = q["object"]
             target_word = q["word"]
+            relation_expr = f"{obj_name}+{target_word}"
             kind = q["kind"]
             mask_id = str(q.get("mask_id", ""))
             if mask_id not in obj_masks:
                 return None
 
-            target_step, matched_labels = _find_target_final_step(step_word_map, target_word, token_labels)
+            target_step, matched_labels = _find_target_final_step(step_word_map, relation_expr, token_labels)
             if target_step < 0 or target_step >= num_rounds:
                 return None
 
