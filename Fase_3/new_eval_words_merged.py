@@ -142,6 +142,32 @@ def _find_target_final_step(step_word_map: dict, target_word: str, token_labels:
     if not target_n:
         return -1, []
 
+    def _expand_group_tokens(step_idx: int) -> list[str]:
+        meta = step_word_map.get(step_idx, {})
+        start = int(meta.get("word_step_start", step_idx))
+        end = int(meta.get("word_step_end", step_idx))
+        if not token_labels:
+            return []
+        start = max(0, min(start, len(token_labels) - 1))
+        end = max(start, min(end, len(token_labels) - 1))
+        return token_labels[start:end + 1]
+
+    def _group_items() -> list[tuple[int, int, str]]:
+        items = []
+        seen = set()
+        for step, meta in step_word_map.items():
+            start = int(meta.get("word_step_start", step))
+            end = int(meta.get("word_step_end", step))
+            key = (start, end)
+            if key in seen:
+                continue
+            seen.add(key)
+            items.append((start, end, _norm_word(meta.get("word", ""))))
+        items.sort(key=lambda x: (x[0], x[1]))
+        return items
+
+    group_items = _group_items()
+
     def _match_token_sequence(parts: list[str]) -> tuple[int, list[str]]:
         """Return the last token index and matched labels for an ordered match with gaps."""
         if not parts:
@@ -151,16 +177,21 @@ def _find_target_final_step(step_word_map: dict, target_word: str, token_labels:
         search_start = 0
         for part in parts:
             found = -1
-            for idx in range(search_start, len(token_labels)):
-                if _norm_word(token_labels[idx]) == part:
-                    found = idx
+            for gi in range(search_start, len(group_items)):
+                _, end_idx, group_word = group_items[gi]
+                if group_word == part:
+                    found = gi
                     break
             if found < 0:
                 return -1, []
             matched_indices.append(found)
             search_start = found + 1
 
-        return matched_indices[-1], [token_labels[idx] for idx in matched_indices]
+        matched_labels = []
+        for gi in matched_indices:
+            _, end_idx, _ = group_items[gi]
+            matched_labels.extend(_expand_group_tokens(end_idx))
+        return group_items[matched_indices[-1]][1], matched_labels
 
     def _match_token_sequence_reversed(parts: list[str]) -> tuple[int, list[str]]:
         reversed_parts = list(reversed(parts))
@@ -171,41 +202,48 @@ def _find_target_final_step(step_word_map: dict, target_word: str, token_labels:
     def _match_single_part(parts: list[str]) -> tuple[int, list[str]]:
         if not parts:
             return -1, []
-        # When a spatial phrase contains multiple parts (e.g. "A + B")
-        # try to find ANY of the parts in the token stream. Prefer exact
-        # normalized matches; among matches choose the latest occurrence
-        # (closest to the end of generation). If no exact match is found,
-        # fall back to prefix/morphological heuristics (>=3 chars).
 
+        def _matches_part(word_norm: str, part: str) -> bool:
+            if not word_norm or not part:
+                return False
+            if word_norm == part:
+                return True
+            return (
+                len(word_norm) >= 3 and len(part) >= 3 and
+                (word_norm.startswith(part[:3]) or part.startswith(word_norm[:3]))
+            )
+
+        # First try reconstructed word groups: this lets us prefer the end of
+        # the actual word even when the surface token is split into subtokens.
         best_idx = -1
         best_token = None
-
-        # Exact normalized matches (choose latest)
-        for idx, token in enumerate(token_labels):
-            tok_norm = _norm_word(token)
-            for part in parts:
-                if tok_norm == part:
-                    if idx > best_idx:
-                        best_idx = idx
-                        best_token = token
-
-        if best_idx >= 0:
-            return best_idx, [best_token]
-
-        # No exact matches -> try prefix/morph match (len>=3)
-        best_idx = -1
-        best_token = None
-        for idx, token in enumerate(token_labels):
-            tok_norm = _norm_word(token)
-            for part in parts:
-                if (len(tok_norm) >= 3 and len(part) >= 3 and
-                        (tok_norm.startswith(part[:3]) or part.startswith(tok_norm[:3]))):
-                    if idx > best_idx:
-                        best_idx = idx
-                        best_token = token
+        seen_group_ends = set()
+        for step, meta in step_word_map.items():
+            end_idx = int(meta.get("word_step_end", step))
+            if end_idx in seen_group_ends:
+                continue
+            seen_group_ends.add(end_idx)
+            word = str(meta.get("word", "")).strip()
+            word_norm = _norm_word(word)
+            if any(_matches_part(word_norm, part) for part in parts):
+                if end_idx > best_idx:
+                    best_idx = end_idx
+                    best_token = word or token_labels[end_idx]
 
         if best_idx >= 0:
-            return best_idx, [best_token]
+            return best_idx, _expand_group_tokens(best_idx)
+
+        # Fall back to raw token labels, again choosing the latest matching
+        # occurrence among all parts.
+        for idx, token in enumerate(token_labels):
+            tok_norm = _norm_word(token)
+            if any(_matches_part(tok_norm, part) for part in parts):
+                if idx > best_idx:
+                    best_idx = idx
+                    best_token = token
+
+        if best_idx >= 0:
+            return best_idx, _expand_group_tokens(best_idx)
 
         return -1, []
 
@@ -242,7 +280,7 @@ def _find_target_final_step(step_word_map: dict, target_word: str, token_labels:
     if candidates:
         result = max(candidates)
         print(f"    [MATCH] target_word='{target_word}' (norm='{target_n}') -> step {result} in step_word_map")
-        return result, [step_word_map[result]["word"]] if result in step_word_map else []
+        return result, _expand_group_tokens(result)
 
     # Fallback: exact token label match.
     last = -1
@@ -252,7 +290,7 @@ def _find_target_final_step(step_word_map: dict, target_word: str, token_labels:
     
     if last >= 0:
         print(f"    [FALLBACK] target_word='{target_word}' (norm='{target_n}') -> step {last} in token_labels")
-        return last, [token_labels[last]]
+        return last, _expand_group_tokens(last)
     else:
         print(f"    [NOT FOUND] target_word='{target_word}' (norm='{target_n}')")
         print(f"              step_word_map keys: {list(step_word_map.keys())}")
