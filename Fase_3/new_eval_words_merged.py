@@ -171,19 +171,42 @@ def _find_target_final_step(step_word_map: dict, target_word: str, token_labels:
     def _match_single_part(parts: list[str]) -> tuple[int, list[str]]:
         if not parts:
             return -1, []
+        # When a spatial phrase contains multiple parts (e.g. "A + B")
+        # try to find ANY of the parts in the token stream. Prefer exact
+        # normalized matches; among matches choose the latest occurrence
+        # (closest to the end of generation). If no exact match is found,
+        # fall back to prefix/morphological heuristics (>=3 chars).
 
-        target_part = parts[-1]
-        best_match = -1
+        best_idx = -1
+        best_token = None
+
+        # Exact normalized matches (choose latest)
         for idx, token in enumerate(token_labels):
             tok_norm = _norm_word(token)
-            if tok_norm == target_part:
-                return idx, [token]
-            if (len(tok_norm) >= 3 and len(target_part) >= 3 and
-                    (tok_norm.startswith(target_part[:3]) or target_part.startswith(tok_norm[:3]))):
-                if best_match == -1:
-                    best_match = idx
-        if best_match >= 0:
-            return best_match, [token_labels[best_match]]
+            for part in parts:
+                if tok_norm == part:
+                    if idx > best_idx:
+                        best_idx = idx
+                        best_token = token
+
+        if best_idx >= 0:
+            return best_idx, [best_token]
+
+        # No exact matches -> try prefix/morph match (len>=3)
+        best_idx = -1
+        best_token = None
+        for idx, token in enumerate(token_labels):
+            tok_norm = _norm_word(token)
+            for part in parts:
+                if (len(tok_norm) >= 3 and len(part) >= 3 and
+                        (tok_norm.startswith(part[:3]) or part.startswith(tok_norm[:3]))):
+                    if idx > best_idx:
+                        best_idx = idx
+                        best_token = token
+
+        if best_idx >= 0:
+            return best_idx, [best_token]
+
         return -1, []
 
     # Check if this is a spatial relation phrase (contains "+")
