@@ -52,7 +52,7 @@ PROMPT      = "Describe this image in two sentences."
 MAX_NEW_TOKENS = 256
 
 LAYERS = None
-AGGREGATE_SUBTOKENS = True
+AGGREGATE_SUBTOKENS = False
 IMAGES_LIST = None
 
 MODE_A = True   # Enable old-style evaluation
@@ -1123,7 +1123,7 @@ def _write_summary(rows, mode_label: str, csv_name: str):
     else:
         full_fields = ["image", "layer", "step", "step_end", "token",
                        "word_id", "word", "word_n_subtokens",
-                       "query_object", "query_word", "query_pair",
+                       "query_object", "query_word", "query_pair", "query_mask",
                        "target_type", "target",
                        "obj_iou", "iou_hard", "io_ratio", "wdp",
                        "func_iou", "f1_iou"]
@@ -1204,6 +1204,10 @@ if __name__ == "__main__":
     all_rows_a = []  # Mode A results
     all_rows_b = []  # Mode B results
 
+    # Single shared CSV for all generated texts
+    gen_csv_path = OUT_DIR / "generated_all.csv"
+    gen_rows = []
+
     for img_path in image_files:
         stem = img_path.stem
         print(f"\n{'=' * 60}")
@@ -1221,6 +1225,9 @@ if __name__ == "__main__":
         print(f"  generated: '{ctx['gen_text']}'  ({ctx['num_rounds']} steps)")
         print(f"  raw_token_labels: {ctx.get('raw_token_labels', [])}")
         print(f"  token_labels: {ctx.get('token_labels', [])}")
+
+        # ---- Collect generated text ----
+        gen_rows.append({"image_id": stem, "generated_text": ctx["gen_text"]})
 
         n_layers = ctx["n_layers"]
         outputs = ctx["outputs"]
@@ -1270,6 +1277,14 @@ if __name__ == "__main__":
     print(f"\n\n{'=' * 60}")
     print("WRITING RESULTS")
     print(f"{'=' * 60}")
+
+    # Write generated text CSV
+    if gen_rows:
+        with gen_csv_path.open("w", newline="", encoding="utf-8") as f:
+            w = csv.DictWriter(f, fieldnames=["image_id", "generated_text"])
+            w.writeheader()
+            w.writerows(gen_rows)
+        print(f"Generated texts CSV -> {gen_csv_path}  ({len(gen_rows)} rows)")
 
     if MODE_A and all_rows_a:
         _write_summary(all_rows_a, "A", "results_mode_a.csv")
