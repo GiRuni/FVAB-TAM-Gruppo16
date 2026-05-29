@@ -91,6 +91,10 @@ def main() -> None:
     )
     output_dir = resolve_output_dir(instances_json)
 
+    if output_dir.exists():
+        print(f"Output directory already exists: {output_dir}")
+        return
+
     coco = COCO(str(instances_json))
     target_img_ids = coco.getImgIds()
 
