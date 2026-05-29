@@ -58,6 +58,8 @@ IMAGES_LIST = None
 MODE_A = True   # Enable old-style evaluation
 MODE_B = True   # Enable new-style evaluation
 
+VERBOSE = False  # Print detailed info about each query and target step, even if no masks are found
+
 
 # ===================================================================
 # Utilities shared by both modes
@@ -1212,10 +1214,14 @@ if __name__ == "__main__":
 
     for img_path in image_files:
         stem = img_path.stem
+        obj_masks = get_object_masks(stem, MASKS_DIR)
+
+        if not obj_masks and VERBOSE == False:
+            continue
+
         print(f"\n{'=' * 60}")
         print(f"--- {stem} ---")
 
-        obj_masks = get_object_masks(stem, MASKS_DIR)
         if not obj_masks:
             print(f"  [SKIP] no masks found in {MASKS_DIR / stem}")
             continue
