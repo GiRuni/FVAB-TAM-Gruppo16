@@ -703,7 +703,7 @@ OUT_DIR     = Path("results")
 VIS_DIR     = Path("vis_results")        # TAM heatmaps per layer/step
 GRIDS_DIR   = Path("token_grids")        # per-token cross-layer grids
 
-PROMPT      = "Describe this image in detail."
+PROMPT      = "Describe this image in two sentences."
 MAX_NEW_TOKENS = 256
 
 # Layer selection:
