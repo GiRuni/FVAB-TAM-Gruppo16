@@ -746,6 +746,8 @@ def evaluate_image_mode_b(ctx: dict, obj_masks: dict, spatial_cfg: dict,
             preserve_words = [obj_name]
             preserve_words.extend(matched_labels[:-1])
             preserve_words = list(dict.fromkeys(w for w in preserve_words if w))
+            print(f"Running query for image {stem}, target '{relation_expr}' "
+                  f"-> step {target_step}, preserve words: {preserve_words}")
 
             local_img_scores = []
             img_map_local = None
