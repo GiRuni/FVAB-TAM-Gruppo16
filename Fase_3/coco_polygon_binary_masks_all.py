@@ -91,8 +91,10 @@ def main() -> None:
     )
     output_dir = resolve_output_dir(instances_json)
 
-    if output_dir.exists():
-        print(f"Output directory already exists: {output_dir}")
+    # Check if output directory already exists with content
+    if output_dir.exists() and any(output_dir.iterdir()):
+        print(f"Output directory already exists with content: {output_dir}")
+        print("Exiting to prevent overwriting existing masks.")
         return
 
     coco = COCO(str(instances_json))
