@@ -3,12 +3,12 @@
     2. 
     3. 
 2. 000000000872
-   1. 
-   2. person + playing (560228, 559508)
-   3. person + behind + person (560228, 559508)
+   1. player + white (560228)
+   2. player + playing (560228, 559508)
+   3. player + behind + player (560228, 559508)
 3. 000000001296
    1. cell phone + white (324614)
-   2. person + holding (470530)
+   2. woman + holding (470530)
    3. 
 4. 000000032081
    1.
