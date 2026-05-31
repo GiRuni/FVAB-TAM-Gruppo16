@@ -4,6 +4,7 @@ import numpy as np
 from scipy.optimize import minimize_scalar
 from pathlib import Path
 
+VERBOSE = False
 
 def rank_guassian_filter(img, kernel_size=3):
     """
@@ -311,7 +312,10 @@ def multimodal_process(raw_img, vision_shape, img_scores, txt_scores, txts, cand
         try:
             txt_map = vis_text(txts, txt_scores, candidates, candi_scores, vis_token_idx, path=img_save_fn, font=r'{5pt}{6pt}')
         except:
-            print('Skip text visualization, please check the installation of texlive-xetex.')
+            if VERBOSE:
+                print('Skip text visualization, please check the installation of texlive-xetex.')
+            else:
+                print('.', end='')
             return out_img, img_map
         
         if not isinstance(txt_map, np.ndarray):
@@ -350,7 +354,10 @@ def multimodal_process(raw_img, vision_shape, img_scores, txt_scores, txts, cand
         try:
             txt_map = vis_text(txts, txt_scores, candidates, candi_scores, vis_token_idx, path=img_save_fn)
         except:
-            print('Skip text visualization, please check the installation of texlive-xetex.')
+            if VERBOSE:
+                print('Skip text visualization, please check the installation of texlive-xetex.')
+            else:
+                print('.', end='')
             return out_img, img_scores
 
         if not isinstance(txt_map, np.ndarray):
@@ -386,7 +393,10 @@ def multimodal_process(raw_img, vision_shape, img_scores, txt_scores, txts, cand
         try:
             txt_map = vis_text(txts, txt_scores, candidates, candi_scores, vis_token_idx, path=img_save_fn, font=r'{5pt}{6pt}')
         except:
-            print('Skip text visualization, please check the installation of texlive-xetex.')
+            if VERBOSE:
+                print('Skip text visualization, please check the installation of texlive-xetex.')
+            else:
+                print('.', end='')
             return out_img, img_scores
 
         if not isinstance(txt_map, np.ndarray):
