@@ -485,7 +485,7 @@ def _build_step_word_map(raw_tokens: list, token_labels: list) -> dict:
 def _find_target_final_step(step_word_map: dict, target_word: str, token_labels: list) -> tuple:
     target_n = _norm_word(target_word)
     if not target_n:
-        return -1, []
+        return [-1], []
 
     def _expand_group_tokens(step_idx: int) -> list[str]:
         meta = step_word_map.get(step_idx, {})
@@ -515,7 +515,7 @@ def _find_target_final_step(step_word_map: dict, target_word: str, token_labels:
 
     def _match_token_sequence(parts: list[str]) -> tuple[int, list[str]]:
         if not parts:
-            return -1, []
+            return [-1], []
         matched_indices = []
         search_start = 0
         for part in parts:
@@ -526,19 +526,19 @@ def _find_target_final_step(step_word_map: dict, target_word: str, token_labels:
                     found = gi
                     break
             if found < 0:
-                return -1, []
+                return [-1], []
             matched_indices.append(found)
             search_start = found + 1
         matched_labels = []
         for gi in matched_indices:
             _, end_idx, _ = group_items[gi]
             matched_labels.extend(_expand_group_tokens(end_idx))
-        return group_items[matched_indices[-1]][1], matched_labels
+        return [ [group_items[i][1] for i in matched_indices], matched_labels ]
 
     def _match_token_sequence_reversed(parts: list[str]) -> tuple[int, list[str]]:
         reversed_parts = list(reversed(parts))
         if reversed_parts == parts:
-            return -1, []
+            return [-1], []
         return _match_token_sequence(reversed_parts)
 
     def _matches_part(word_norm: str, part: str) -> bool:
@@ -579,18 +579,20 @@ def _find_target_final_step(step_word_map: dict, target_word: str, token_labels:
         parts = [_norm_word(p.strip()) for p in target_word.split("+")]
         parts = [p for p in parts if p]
         if len(parts) > 1:
-            i, ml = _match_token_sequence(parts)
+            indexes, ml = _match_token_sequence(parts)
+            i = indexes[-1]
             if i >= 0:
                 print(f"    [MATCH SPATIAL] target_word='{target_word}' -> step {i} (tokens: {ml})")
-                return i, ml
-            i, ml = _match_token_sequence_reversed(parts)
+                return indexes, ml
+            indexes, ml = _match_token_sequence_reversed(parts)
+            i = indexes[-1]
             if i >= 0:
                 print(f"    [MATCH SPATIAL REVERSED] target_word='{target_word}' -> step {i} (tokens: {ml})")
-                return i, ml
+                return indexes, ml
             i, ml = _match_single_part(parts)
             if i >= 0:
                 print(f"    [MATCH SPATIAL FALLBACK] target_word='{target_word}' -> step {i} (tokens: {ml})")
-                return i, ml
+                return [i], ml
 
     candidates = []
     for step, meta in step_word_map.items():
@@ -600,15 +602,15 @@ def _find_target_final_step(step_word_map: dict, target_word: str, token_labels:
     if candidates:
         result = max(candidates)
         print(f"    [MATCH] target_word='{target_word}' (norm='{target_n}') -> step {result} in step_word_map")
-        return result, _expand_group_tokens(result)
+        return [result], _expand_group_tokens(result)
 
     last = -1
     for i, t in enumerate(token_labels):
         if _norm_word(t) == target_n:
             last = i
     if last >= 0:
-        return last, _expand_group_tokens(last)
-    return last, []
+        return [last], _expand_group_tokens(last)
+    return [last], []
 
 
 def load_object_word_queries(path: Path) -> dict:
@@ -743,9 +745,10 @@ def evaluate_image_mode_b(ctx: dict, obj_masks: dict, spatial_cfg: dict,
             if mask_id not in obj_masks:
                 return None
 
-            target_step, matched_labels = _find_target_final_step(
+            matched_steps, matched_labels = _find_target_final_step(
                 step_word_map, relation_expr, token_labels
             )
+            target_step = matched_steps[-1]
             if target_step < 0 or target_step >= num_rounds:
                 return None
 
@@ -781,16 +784,18 @@ def evaluate_image_mode_b(ctx: dict, obj_masks: dict, spatial_cfg: dict,
                 "word_step_start": target_step, "word_step_end": target_step,
                 "word_n_subtokens": 1,
             })
+            firstwmeta = step_word_map.get(matched_steps[0], {"word_step_start": matched_steps[0], "word_step_end": matched_steps[0]})
             return {
-                "image": stem, "layer": layer_idx, "step": target_step,
+                "image": stem, "layer": layer_idx,
+                "target_step_start": wmeta["word_step_start"], "target_step_end": wmeta["word_step_end"],
                 "token": tok_lbl,
                 "word_id": wmeta["word_id"], "word": wmeta["word"],
-                "word_step_start": wmeta["word_step_start"],
-                "word_step_end": wmeta["word_step_end"],
                 "word_n_subtokens": wmeta["word_n_subtokens"],
                 "target_type": f"query_{kind}", "target": obj_name,
                 "query_object": obj_name, "query_word": target_word,
                 "query_mask": mask_id, "query_pair": f"{target_word}+{obj_name}",
+                "firstword_step_start": firstwmeta["word_step_start"], "firstword_step_end": firstwmeta["word_step_end"],
+                "firstword": firstwmeta["word"],
                 **m,
             }
 
@@ -1129,8 +1134,9 @@ def _write_summary(rows, mode_label: str, csv_name: str):
                        "obj_iou", "iou_hard", "io_ratio", "wdp",
                        "func_iou", "f1_iou"]
     else:
-        full_fields = ["image", "layer", "step", "step_end", "token",
-                       "word_id", "word", "word_n_subtokens",
+        full_fields = ["image", "layer",
+                       "target_step_start", "target_step_end", "token", "word_id", "word", "word_n_subtokens",
+                       "firstword_step_start", "firstword_step_end", "firstword",
                        "query_object", "query_word", "query_pair", "query_mask",
                        "target_type", "target",
                        "obj_iou", "iou_hard", "io_ratio", "wdp",
