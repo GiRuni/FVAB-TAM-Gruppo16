@@ -406,7 +406,7 @@ def multimodal_process(raw_img, vision_shape, img_scores, txt_scores, txts, cand
             if VERBOSE:
                 print('Skip text visualization, please check the installation of texlive-xetex.')
             else:
-                print('.', end='')
+                print('.', end='', flush=True)
             return out_img, img_map
         
         if not isinstance(txt_map, np.ndarray):
@@ -449,7 +449,7 @@ def multimodal_process(raw_img, vision_shape, img_scores, txt_scores, txts, cand
             if VERBOSE:
                 print('Skip text visualization, please check the installation of texlive-xetex.')
             else:
-                print('.', end='')
+                print('.', end='', flush=True)
             return out_img, img_scores
 
         if not isinstance(txt_map, np.ndarray):
@@ -489,7 +489,7 @@ def multimodal_process(raw_img, vision_shape, img_scores, txt_scores, txts, cand
             if VERBOSE:
                 print('Skip text visualization, please check the installation of texlive-xetex.')
             else:
-                print('.', end='')
+                print('.', end='', flush=True)
             return out_img, img_scores
 
         if not isinstance(txt_map, np.ndarray):
