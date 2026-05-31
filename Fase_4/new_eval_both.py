@@ -581,12 +581,15 @@ def _find_target_final_step(step_word_map: dict, target_word: str, token_labels:
         if len(parts) > 1:
             i, ml = _match_token_sequence(parts)
             if i >= 0:
+                print(f"    [MATCH SPATIAL] target_word='{target_word}' -> step {i} (tokens: {ml})")
                 return i, ml
             i, ml = _match_token_sequence_reversed(parts)
             if i >= 0:
+                print(f"    [MATCH SPATIAL REVERSED] target_word='{target_word}' -> step {i} (tokens: {ml})")
                 return i, ml
             i, ml = _match_single_part(parts)
             if i >= 0:
+                print(f"    [MATCH SPATIAL FALLBACK] target_word='{target_word}' -> step {i} (tokens: {ml})")
                 return i, ml
 
     candidates = []
@@ -596,6 +599,7 @@ def _find_target_final_step(step_word_map: dict, target_word: str, token_labels:
             candidates.append(int(meta.get("word_step_end", step)))
     if candidates:
         result = max(candidates)
+        print(f"    [MATCH] target_word='{target_word}' (norm='{target_n}') -> step {result} in step_word_map")
         return result, _expand_group_tokens(result)
 
     last = -1
