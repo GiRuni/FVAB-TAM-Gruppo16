@@ -1,7 +1,7 @@
 ﻿1. 000000000285
-    1. bear + brown (587562)
-    2. 
-    3. 
+   1. bear + brown (587562)
+   2. 
+   3. 
 2. 000000000872
    1. player + white (560228)
    2. player + playing (560228, 559508)
@@ -11,7 +11,7 @@
    2. woman + holding (470530)
    3. 
 4. 000000032081
-   1.
+   1. player + white (469488)
    2. player + wearing (469488)
    3. 
 5. 000000010363
@@ -65,7 +65,7 @@
 17. 000000078823
    1. car + brown (133097)
    2. dog + sitting (7544)
-   3. dog + on + car (7544,133097)
+   3. dog + on + car (7544, 133097)
 18. 000000301867
    1. umbrella + white (281970)
    2. women + laughing (1739135, 1753039, 1762234)
@@ -91,9 +91,9 @@
    2. bird + sitting (40234)
    3. 
 24. 000000309964
-   1. umbrella + blue
+   1. tent + blue (279725)
    2. woman + sitting (435518)
-   3. woman + under + umbrella ((435518, 477253), 279725)
+   3. woman + under + tent (435518, 279725)
 25. 000000311180
    1. scissors + green (1158274)
    2. hand + holding (1724916)
@@ -123,8 +123,8 @@
    2. 
    3. fork + right of + carrot (688951, (1064070, 1064196, 1064612, 1065235, 1065381, 1065602))
 32. 000000322163
-   1. man + white (492721, 543239, 512673)
-   2. man + cooking (543239, (1570875, 1899216, 1537639))
+   1.
+   2. man + preparing (543239, (1570875, 1899216, 1537639))
    3. oven + behind + man (2139027, 543239)
 33. 000000327601
    1. woman + blue (439559)
@@ -147,17 +147,17 @@
    2. woman + sitting (425488)
    3. woman + behind + suitcase (425488, 1183941)
 38. 000000346905
-   1. elephant + muddy (584349, 581487, 585924)
-   2. elephant + standing (584349, 581487, 585924)
+   1. elephants + muddy (584349, 581487, 585924)
+   2. elephants + standing (584349, 581487, 585924)
    3. elephant + between + elephant (584349, (581487, 585924))
 39. 000000347930
-   1. dog + brown (5995)
+   1. dog + red (5995)
    2. dog + sitting (5995)
    3. dog + on + couch (5995, 115848)
 40. 000000348488
-   1. horse + black (58744, 59715, 273733, 274344)
-   2. horse + running (58744, 59715, 273733, 274344)
-   3. horse + behind + horse (58744, 59715, 273733, 274344)
+   1. horses + black (58744, 59715, 273733, 274344)
+   2. horses + drawn (58744, 59715, 273733, 274344)
+   3.
 41. 000000348708
    1. bowl + white (715349)
    2. 
