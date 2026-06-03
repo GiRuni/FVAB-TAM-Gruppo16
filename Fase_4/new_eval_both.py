@@ -659,7 +659,10 @@ def load_object_word_queries(path: Path) -> dict:
         right = re.sub(r"\s+", " ", right).strip()
         if not right:
             continue
-        kind = kinds[min(len(current_entries), len(kinds) - 1)]
+        try:
+            kind = kinds[int(relation_num) - 1]
+        except IndexError:
+            kind = "unknown"
         current_entries.append({
             "kind": kind, "object": left, "word": right,
             "mask_id": relation_num,
