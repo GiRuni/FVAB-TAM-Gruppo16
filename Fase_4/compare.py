@@ -46,9 +46,19 @@ for i, r in mode_b.iterrows():
         "f1_iou": r["f1_iou"],
     })
 
-    matching = mode_a[(mode_a["image"] == image_id) & (mode_a["step"] == r["target_step_end"]) & (mode_a["target"] == str(r["query_mask"]))]
-    matching_aux_fw = mode_a[(mode_a["image"] == image_id) & (mode_a["step"] >= int(r["firstword_step_start"])) & (mode_a["step"] <= int(r["firstword_step_end"])) & (mode_a["target"] == str(r["query_mask"]))]
-    matching_aux_target = mode_a[(mode_a["image"] == image_id) & (mode_a["step"] >= int(r["target_step_start"])) & (mode_a["step"] <= int(r["target_step_end"])) & (mode_a["target"] == str(r["query_mask"]))]
+    matching = mode_a[(mode_a["image"] == image_id) & 
+                      (mode_a["step"] == r["target_step_end"]) & 
+                      (mode_a["target"] == str(r["query_mask"]))]
+    
+    matching_aux_fw = mode_a[(mode_a["image"] == image_id) & 
+                             (mode_a["step"] >= int(r["firstword_step_start"])) & 
+                             (mode_a["step"] <= int(r["firstword_step_end"])) & 
+                             (mode_a["target"].isin( (f"{str(r["query_mask"])}_{r["word"]}", f"{str(r["query_mask"])}_{r["firstword"]}", f"{str(r["query_mask"])}_{r["firstword"]}_first", f"{str(r["query_mask"])}_{r["firstword"]}_second") ))]
+    
+    matching_aux_target = mode_a[(mode_a["image"] == image_id) & 
+                                 (mode_a["step"] >= int(r["target_step_start"])) & 
+                                 (mode_a["step"] <= int(r["target_step_end"])) & 
+                                 (mode_a["target"].isin( (f"{str(r["query_mask"])}_{r["word"]}", f"{str(r["query_mask"])}_{r["firstword"]}", f"{str(r["query_mask"])}_{r["word"]}_first", f"{str(r["query_mask"])}_{r["word"]}_second") ))]
 
     for _, r2 in matching.iterrows():
         out_rows.append({
@@ -64,12 +74,12 @@ for i, r in mode_b.iterrows():
             "f1_iou": r2["f1_iou"],
         })
 
-    out_rows.append({c: "" for c in header})
-
+    if not matching_aux_fw.empty:
+        out_rows.append({c: "" for c in header})
     for _, r_fw in matching_aux_fw.iterrows():
         out_rows.append({
             "image_id": image_id,
-            "mask_id": r_fw["target"],
+            "mask_id": '_'.join(r_fw["target"].split('_')[:2]),
             "step": r_fw["step"],
             "token_group": r_fw["token"],
             "obj_iou": r_fw["obj_iou"],
@@ -80,12 +90,12 @@ for i, r in mode_b.iterrows():
             "f1_iou": r_fw["f1_iou"],
         })
     
-    out_rows.append({c: "" for c in header})
-
+    if not matching_aux_target.empty:
+        out_rows.append({c: "" for c in header})
     for _, r_target in matching_aux_target.iterrows():
         out_rows.append({
             "image_id": image_id,
-            "mask_id": r_target["target"],
+            "mask_id": '_'.join(r_target["target"].split('_')[:2]),
             "step": r_target["step"],
             "token_group": r_target["token"],
             "obj_iou": r_target["obj_iou"],
