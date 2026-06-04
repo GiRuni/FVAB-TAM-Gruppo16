@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 import sys
 import os
-import re
+import regex as re
 
 def combine_multiple_masks(mask_paths):
     masks = []
@@ -76,6 +76,47 @@ def parse_target_ids_file(file_path):
                         seen.add(id_int)
                 
                 relations[current_image_id][current_relation_num] = unique_ids
+
+                if int(current_relation_num) in (1, 2):
+                    # Extract attributes and actions subjects and related masks
+
+                    attr_action_pattern = re.compile(
+                        r"^\s*(?P<subject>[\w\s]+?)\s*\+\s*"                    # Subject name
+                        r"(?P<aux>[\w\s]+?)\s*"                                 # Attribute or Action name
+                        r"\((?P<subject_masks>[\d+,\s]+)"                       # Subject masks
+                        r"(?:\s*,\s*\((?P<action_masks>[\d+,\s]+)\))?\)\s*$"    # Optional nested action masks (da non includere nel merge)
+                    )
+
+                    attr_action_matches = re.match(attr_action_pattern, relation_text)
+
+                    subject_name = attr_action_matches.group("subject")
+                    subject_ids = [x.strip() for x in attr_action_matches.group("subject_masks").split(',')]
+
+                    relations[current_image_id][f"{current_relation_num}_{subject_name}"] = subject_ids
+                else:
+                    # Extract spatial subjects and related masks
+
+                    spatial_pattern = re.compile(
+                        r"^\s*(?P<first_subject>[\w\s]+?)\s*\+\s*"              # First subject name
+                        r"(?P<spatial>[\w\s]+?)\s*\+\s*"                        # Spatial keyword
+                        r"(?P<second_subject>[\w\s]+?)\s*"                      # Second subject name
+                        r"\(\s*"                                                # Opening outer parenthesis
+                        r"(?:\((?P<masks_a>[\d+,\s]+)\)|(?P<masks_a>\d+))"      # First subject: either (id, id) or a single id
+                        r"\s*,\s*"                                              # Separating comma
+                        r"(?:\((?P<masks_b>[\d+,\s]+)\)|(?P<masks_b>\d+))"      # Second subject: either (id, id) or a single id
+                        r"\s*\)$"                                               # Closing outer parenthesis
+                    )
+
+                    spatial_matches = re.match(spatial_pattern, relation_text)
+
+                    first_subject_name = spatial_matches.group("first_subject")
+                    first_subject_ids = [x.strip() for x in spatial_matches.group("masks_a").split(',')]
+
+                    second_subject_name = spatial_matches.group("second_subject")
+                    second_subject_ids = [x.strip() for x in spatial_matches.group("masks_b").split(',')]
+
+                    relations[current_image_id][f"{current_relation_num}_{first_subject_name}_first"] = first_subject_ids
+                    relations[current_image_id][f"{current_relation_num}_{second_subject_name}_second"] = second_subject_ids
 
     return relations
 
