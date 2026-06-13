@@ -483,9 +483,11 @@ def _build_step_word_map(raw_tokens: list, token_labels: list) -> dict:
 
 
 def _find_target_final_step(step_word_map: dict, target_word: str, token_labels: list) -> tuple:
+    """Returns (steps, labels, match_type) where match_type is one of:
+    'regular', 'reversed', 'fallback', 'none'."""
     target_n = _norm_word(target_word)
     if not target_n:
-        return [-1], []
+        return [-1], [], "none"
 
     def _expand_group_tokens(step_idx: int) -> list[str]:
         meta = step_word_map.get(step_idx, {})
@@ -513,7 +515,7 @@ def _find_target_final_step(step_word_map: dict, target_word: str, token_labels:
 
     group_items = _group_items()
 
-    def _match_token_sequence(parts: list[str]) -> tuple[int, list[str]]:
+    def _match_token_sequence(parts: list[str]) -> tuple:
         if not parts:
             return [-1], []
         matched_indices = []
@@ -535,7 +537,7 @@ def _find_target_final_step(step_word_map: dict, target_word: str, token_labels:
             matched_labels.extend(_expand_group_tokens(end_idx))
         return [ [group_items[i][1] for i in matched_indices], matched_labels ]
 
-    def _match_token_sequence_reversed(parts: list[str]) -> tuple[int, list[str]]:
+    def _match_token_sequence_reversed(parts: list[str]) -> tuple:
         reversed_parts = list(reversed(parts))
         if reversed_parts == parts:
             return [-1], []
@@ -549,7 +551,7 @@ def _find_target_final_step(step_word_map: dict, target_word: str, token_labels:
         return (len(word_norm) >= 3 and len(part) >= 3 and
                 (word_norm.startswith(part[:3]) or part.startswith(word_norm[:3])))
 
-    def _match_single_part(parts: list[str]) -> tuple[int, list[str]]:
+    def _match_single_part(parts: list[str]) -> tuple:
         if not parts:
             return -1, []
         best_idx = -1
@@ -583,16 +585,16 @@ def _find_target_final_step(step_word_map: dict, target_word: str, token_labels:
             i = indexes[-1]
             if i >= 0:
                 print(f"    [MATCH SPATIAL] target_word='{target_word}' -> step {i} (tokens: {ml})")
-                return indexes, ml
+                return indexes, ml, "regular"
             indexes, ml = _match_token_sequence_reversed(parts)
             i = indexes[-1]
             if i >= 0:
                 print(f"    [MATCH SPATIAL REVERSED] target_word='{target_word}' -> step {i} (tokens: {ml})")
-                return indexes, ml
+                return indexes, ml, "reversed"
             i, ml = _match_single_part(parts)
             if i >= 0:
                 print(f"    [MATCH SPATIAL FALLBACK] target_word='{target_word}' -> step {i} (tokens: {ml})")
-                return [i], ml
+                return [i], ml, "fallback"
 
     candidates = []
     for step, meta in step_word_map.items():
@@ -602,15 +604,15 @@ def _find_target_final_step(step_word_map: dict, target_word: str, token_labels:
     if candidates:
         result = max(candidates)
         print(f"    [MATCH] target_word='{target_word}' (norm='{target_n}') -> step {result} in step_word_map")
-        return [result], _expand_group_tokens(result)
+        return [result], _expand_group_tokens(result), "regular"
 
     last = -1
     for i, t in enumerate(token_labels):
         if _norm_word(t) == target_n:
             last = i
     if last >= 0:
-        return [last], _expand_group_tokens(last)
-    return [last], []
+        return [last], _expand_group_tokens(last), "fallback"
+    return [last], [], "none"
 
 
 def load_object_word_queries(path: Path) -> dict:
@@ -680,11 +682,12 @@ def aggregate_rows_by_word(rows: list) -> list:
             r.get("word_id", r["step"]),
             r.get("word", r.get("token", "")),
             r["target_type"], r["target"],
+            r.get("match_type", "none"),
         )
         buckets[key].append(r)
     out = []
     metric_keys = ["obj_iou", "iou_hard", "io_ratio", "wdp", "func_iou", "f1_iou"]
-    for (image, layer, word_id, word, target_type, target), rlist in buckets.items():
+    for (image, layer, word_id, word, target_type, target, match_type), rlist in buckets.items():
         row = {
             "image": image, "layer": layer,
             "step": min(r["step"] for r in rlist),
@@ -693,12 +696,13 @@ def aggregate_rows_by_word(rows: list) -> list:
             "word_id": word_id, "word": word,
             "word_n_subtokens": max(r.get("word_n_subtokens", 1) for r in rlist),
             "target_type": target_type, "target": target,
+            "match_type": match_type,
         }
         for mk in metric_keys:
             vals = [r[mk] for r in rlist if isinstance(r.get(mk), float) and not math.isnan(r[mk])]
             row[mk] = (sum(vals) / len(vals)) if vals else float("nan")
         out.append(row)
-    out.sort(key=lambda r: (r["image"], r["layer"], r["step"], r["target_type"], r["target"]))
+    out.sort(key=lambda r: (r["image"], r["layer"], r["step"], r["target_type"], r["target"], r.get("match_type", "none")))
     return out
 
 
@@ -748,10 +752,10 @@ def evaluate_image_mode_b(ctx: dict, obj_masks: dict, spatial_cfg: dict,
             if mask_id not in obj_masks:
                 return None
 
-            matched_steps, matched_labels = _find_target_final_step(
+            matched_steps, matched_labels, match_type = _find_target_final_step(
                 step_word_map, relation_expr, token_labels
             )
-            target_step = matched_steps[-1]
+            target_step = matched_steps[-1] if matched_steps else -1
             if target_step < 0 or target_step >= num_rounds:
                 return None
 
@@ -799,6 +803,7 @@ def evaluate_image_mode_b(ctx: dict, obj_masks: dict, spatial_cfg: dict,
                 "query_mask": mask_id, "query_pair": f"{target_word}+{obj_name}",
                 "firstword_step_start": firstwmeta["word_step_start"], "firstword_step_end": firstwmeta["word_step_end"],
                 "firstword": firstwmeta["word"],
+                "match_type": match_type,
                 **m,
             }
 
@@ -1142,6 +1147,7 @@ def _write_summary(rows, mode_label: str, csv_name: str):
                        "firstword_step_start", "firstword_step_end", "firstword",
                        "query_object", "query_word", "query_pair", "query_mask",
                        "target_type", "target",
+                       "match_type",
                        "obj_iou", "iou_hard", "io_ratio", "wdp",
                        "func_iou", "f1_iou"]
 
