@@ -89,6 +89,9 @@ def parse_target_ids_file(file_path):
 
                     attr_action_matches = re.match(attr_action_pattern, relation_text)
 
+                    if not attr_action_matches:
+                        continue
+
                     subject_name = attr_action_matches.group("subject")
                     subject_ids = [x.strip() for x in attr_action_matches.group("subject_masks").split(',')]
 
@@ -109,14 +112,17 @@ def parse_target_ids_file(file_path):
 
                     spatial_matches = re.match(spatial_pattern, relation_text)
 
+                    if not spatial_matches:
+                        continue
+                    
                     first_subject_name = spatial_matches.group("first_subject")
                     first_subject_ids = [x.strip() for x in spatial_matches.group("masks_a").split(',')]
 
                     second_subject_name = spatial_matches.group("second_subject")
                     second_subject_ids = [x.strip() for x in spatial_matches.group("masks_b").split(',')]
 
-                    relations[current_image_id][f"{current_relation_num}_{first_subject_name}_first"] = first_subject_ids
-                    relations[current_image_id][f"{current_relation_num}_{second_subject_name}_second"] = second_subject_ids
+                    relations[current_image_id][f"{current_relation_num}_first_{first_subject_name}"] = first_subject_ids
+                    relations[current_image_id][f"{current_relation_num}_second_{second_subject_name}"] = second_subject_ids
 
     return relations
 
