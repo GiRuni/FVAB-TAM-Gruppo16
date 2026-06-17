@@ -756,8 +756,18 @@ def evaluate_image_mode_b(ctx: dict, obj_masks: dict, spatial_cfg: dict,
                 step_word_map, relation_expr, token_labels
             )
             target_step = matched_steps[-1] if matched_steps else -1
-            if target_step < 0 or target_step >= num_rounds:
+            if target_step >= num_rounds:
                 return None
+            if target_step < 0:
+                return {
+                "image": stem, "layer": layer_idx,
+                "target_step_start": -1, "target_step_end": -1,
+                "target_type": f"query_{kind}",
+                "query_object": obj_name, "query_word": target_word,
+                "query_mask": mask_id, "query_pair": f"{target_word}+{obj_name}",
+                "firstword_step_start": -1, "firstword_step_end": -1,
+                "match_type": match_type,
+            }
 
             preserve_words = [obj_name]
             preserve_words.extend(matched_labels[:-1])
