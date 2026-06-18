@@ -24,6 +24,8 @@ def _split_query_components(row) -> list[str]:
     pair = str(row.get("query_pair", "")).strip()
     return [part.strip() for part in pair.split("+") if part.strip()]
 
+#mode_b = mode_b[~mode_b["match_type"].str.contains("fallback")]    # Ignora le relazioni con esito "fallback" (match parziale)
+
 for i, r in mode_b.iterrows():
     if i > 0:
         out_rows.append({c: "-"*60 for c in header})
@@ -50,15 +52,24 @@ for i, r in mode_b.iterrows():
                       (mode_a["step"] == r["target_step_end"]) & 
                       (mode_a["target"] == str(r["query_mask"]))]
     
-    matching_aux_fw = mode_a[(mode_a["image"] == image_id) & 
+    matching_aux_fw = mode_a[(mode_a["target_type"] == "object") & 
+                             (mode_a["image"] == image_id) & 
                              (mode_a["step"] >= int(r["firstword_step_start"])) & 
                              (mode_a["step"] <= int(r["firstword_step_end"])) & 
-                             (mode_a["target"].isin( (f"{str(r["query_mask"])}_{r["word"]}", f"{str(r["query_mask"])}_{r["firstword"]}", f"{str(r["query_mask"])}_{r["firstword"]}_first", f"{str(r["query_mask"])}_{r["firstword"]}_second") ))]
+                             (
+                                 ( (r["match_type"] in ("regular", "fallback")) & mode_a["target"].str.startswith(f"{str(r["query_mask"])}_first")) |
+                                 ( (r["match_type"] == "reversed") & mode_a["target"].str.startswith(f"{str(r["query_mask"])}_second")) |
+                                 ( (int(r["query_mask"]) < 3) & mode_a["target"].str.startswith(f"{str(r["query_mask"])}_"))
+                             )]
     
-    matching_aux_target = mode_a[(mode_a["image"] == image_id) & 
+    matching_aux_target = mode_a[(mode_a["target_type"] == "object") & 
+                                 (mode_a["image"] == image_id) & 
                                  (mode_a["step"] >= int(r["target_step_start"])) & 
                                  (mode_a["step"] <= int(r["target_step_end"])) & 
-                                 (mode_a["target"].isin( (f"{str(r["query_mask"])}_{r["word"]}", f"{str(r["query_mask"])}_{r["firstword"]}", f"{str(r["query_mask"])}_{r["word"]}_first", f"{str(r["query_mask"])}_{r["word"]}_second") ))]
+                                 (( (r["match_type"] in ("regular", "fallback")) & mode_a["target"].str.startswith(f"{str(r["query_mask"])}_second")) |
+                                  ( (r["match_type"] == "reversed") & mode_a["target"].str.startswith(f"{str(r["query_mask"])}_first")) |
+                                  ( (int(r["query_mask"]) < 3) & mode_a["target"].str.contains(f"{str(r["query_mask"])}_"))                                  
+                                  )]
 
     for _, r2 in matching.iterrows():
         out_rows.append({
@@ -77,9 +88,10 @@ for i, r in mode_b.iterrows():
     if not matching_aux_fw.empty:
         out_rows.append({c: "" for c in header})
     for _, r_fw in matching_aux_fw.iterrows():
+        r_fw_mask_id_components = r_fw["target"].split("_")
         out_rows.append({
             "image_id": image_id,
-            "mask_id": '_'.join(r_fw["target"].split('_')[:2]),
+            "mask_id": f"{r_fw_mask_id_components[0]}_{r_fw_mask_id_components[-1]}",
             "step": r_fw["step"],
             "token_group": r_fw["token"],
             "obj_iou": r_fw["obj_iou"],
@@ -93,9 +105,10 @@ for i, r in mode_b.iterrows():
     if not matching_aux_target.empty:
         out_rows.append({c: "" for c in header})
     for _, r_target in matching_aux_target.iterrows():
+        r_target_mask_id_components = r_target["target"].split("_")
         out_rows.append({
             "image_id": image_id,
-            "mask_id": '_'.join(r_target["target"].split('_')[:2]),
+            "mask_id": f"{r_target_mask_id_components[0]}_{r_target_mask_id_components[-1]}",
             "step": r_target["step"],
             "token_group": r_target["token"],
             "obj_iou": r_target["obj_iou"],

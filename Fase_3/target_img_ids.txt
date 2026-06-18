@@ -100,7 +100,7 @@
    3. scissors + on + hand (1158274, 1724916)
 26. 000000311394
    1. toothbrush + blue (341957)
-   2. baby + holding + toothbrush (448609, 341957)
+   2. baby + holding (448609, 341957)
    3. baby + behind + toothbrush (448609, 341957)
 27. 000000311518
    1. boat + green (178773)
