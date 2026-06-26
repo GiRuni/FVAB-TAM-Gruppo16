@@ -551,50 +551,79 @@ def _find_target_final_step(step_word_map: dict, target_word: str, token_labels:
         return (len(word_norm) >= 3 and len(part) >= 3 and
                 (word_norm.startswith(part[:3]) or part.startswith(word_norm[:3])))
 
-    def _match_single_part(parts: list[str]) -> tuple:
+    def _match_fuzzy_token_sequence(parts: list[str]) -> tuple:
         if not parts:
-            return -1, []
-        best_idx = -1
-        seen_group_ends = set()
-        for step, meta in step_word_map.items():
-            end_idx = int(meta.get("word_step_end", step))
-            if end_idx in seen_group_ends:
+            return [-1], []
+        matched_indices = []
+        search_start = 0
+        for part in parts:
+            found = -1
+            exact = False
+            for gi in range(search_start, len(group_items)):
+                _, end_idx, group_word = group_items[gi]
+                if group_word == part:
+                    found = gi
+                    break
+                if found == -1 and _matches_part(group_word, part):
+                    found = gi
+            if found < 0:
                 continue
-            seen_group_ends.add(end_idx)
-            word = str(meta.get("word", "")).strip()
-            word_norm = _norm_word(word)
-            if any(_matches_part(word_norm, part) for part in parts):
-                if end_idx > best_idx:
-                    best_idx = end_idx
-        if best_idx >= 0:
-            return best_idx, _expand_group_tokens(best_idx)
-        for idx, token in enumerate(token_labels):
-            tok_norm = _norm_word(token)
-            if any(_matches_part(tok_norm, part) for part in parts):
-                if idx > best_idx:
-                    best_idx = idx
-        if best_idx >= 0:
-            return best_idx, _expand_group_tokens(best_idx)
-        return -1, []
+            matched_indices.append(found)
+            search_start = found + 1
+
+        matched_ends = []
+        matched_labels = []
+        for gi in matched_indices:
+            _, end_idx, _ = group_items[gi]
+            matched_ends.append(end_idx)
+            matched_labels.extend(_expand_group_tokens(end_idx))
+        if matched_ends == []:
+            matched_ends = [-1]
+        return matched_ends, matched_labels
+    
+    def _match_fuzzy_token_sequence_reversed(parts: list[str]) -> tuple:
+        reversed_parts = list(reversed(parts))
+        if reversed_parts == parts:
+            return [-1], []
+        return _match_fuzzy_token_sequence(reversed_parts)
 
     if "+" in target_word:
         parts = [_norm_word(p.strip()) for p in target_word.split("+")]
         parts = [p for p in parts if p]
         if len(parts) > 1:
+            fallback = []
             indexes, ml = _match_token_sequence(parts)
             i = indexes[-1]
             if i >= 0:
-                print(f"    [MATCH SPATIAL] target_word='{target_word}' -> step {i} (tokens: {ml})")
+                print(f"    [MATCH SPATIAL] target_word='{target_word}' -> step {i} (indexes: {indexes}, tokens: {ml}, parts: {parts})")
                 return indexes, ml, "regular"
             indexes, ml = _match_token_sequence_reversed(parts)
             i = indexes[-1]
             if i >= 0:
-                print(f"    [MATCH SPATIAL REVERSED] target_word='{target_word}' -> step {i} (tokens: {ml})")
+                print(f"    [MATCH SPATIAL REVERSED] target_word='{target_word}' -> step {i} (indexes: {indexes}, tokens: {ml}, parts: {parts})")
                 return indexes, ml, "reversed"
-            i, ml = _match_single_part(parts)
+            indexes, ml = _match_fuzzy_token_sequence(parts)
+            i = indexes[-1]
             if i >= 0:
-                print(f"    [MATCH SPATIAL FALLBACK] target_word='{target_word}' -> step {i} (tokens: {ml})")
-                return [i], ml, "fallback"
+                if len(indexes) == len(parts):
+                    print(f"    [MATCH SPATIAL FUZZY] target_word='{target_word}' -> step {i} (indexes: {indexes}, tokens: {ml}, parts: {parts})")
+                    return indexes, ml, "fuzzy"
+                else:
+                    fallback = [indexes, ml, "fallback"]
+            indexes, ml = _match_fuzzy_token_sequence_reversed(parts)
+            i = indexes[-1]
+            if i >= 0:
+                if len(indexes) == len(parts):
+                    print(f"    [MATCH SPATIAL FUZZY REVERSED] target_word='{target_word}' -> step {i} (indexes: {indexes}, tokens: {ml}, parts: {parts})")
+                    return indexes, ml, "fuzzy_reversed"
+                elif fallback == []:
+                    fallback = [indexes, ml, "fallback_reversed"]
+            if fallback:
+                if fallback[2] == "fallback":
+                    print(f"    [MATCH SPATIAL FUZZY FALLBACK] target_word='{target_word}' -> step {fallback[0][-1]} (indexes: {fallback[0]}, tokens: {fallback[1]}, parts: {parts})")
+                else:
+                    print(f"    [MATCH SPATIAL FUZZY REVERSED FALLBACK] target_word='{target_word}' -> step {fallback[0][-1]} (indexes: {indexes}, tokens: {ml}, parts: {parts})")
+                return fallback[0], fallback[1], fallback[2]
 
     candidates = []
     for step, meta in step_word_map.items():
@@ -604,14 +633,15 @@ def _find_target_final_step(step_word_map: dict, target_word: str, token_labels:
     if candidates:
         result = max(candidates)
         print(f"    [MATCH] target_word='{target_word}' (norm='{target_n}') -> step {result} in step_word_map")
-        return [result], _expand_group_tokens(result), "regular"
+        return [result], _expand_group_tokens(result), "regular_singleword" # Non dovrebbe mai accadere
 
     last = -1
     for i, t in enumerate(token_labels):
         if _norm_word(t) == target_n:
             last = i
     if last >= 0:
-        return [last], _expand_group_tokens(last), "fallback"
+        return [last], _expand_group_tokens(last), "fallback_singletoken" # Non dovrebbe mai accadere
+    print(f"    [NO MATCH] target_word='{target_word}' (norm='{target_n}')")
     return [last], [], "none"
 
 
