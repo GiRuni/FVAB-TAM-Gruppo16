@@ -57,8 +57,8 @@ for i, r in mode_b.iterrows():
                              (mode_a["step"] >= int(r["firstword_step_start"])) & 
                              (mode_a["step"] <= int(r["firstword_step_end"])) & 
                              (
-                                 ( (r["match_type"] in ("regular", "fallback")) & mode_a["target"].str.startswith(f"{str(r["query_mask"])}_first")) |
-                                 ( (r["match_type"] == "reversed") & mode_a["target"].str.startswith(f"{str(r["query_mask"])}_second")) |
+                                 ( (r["match_type"] in ("regular", "fuzzy", "fallback")) & mode_a["target"].str.startswith(f"{str(r["query_mask"])}_first")) |
+                                 ( (r["match_type"] in ("reversed", "fuzzy_reversed", "fallback_reversed")) & mode_a["target"].str.startswith(f"{str(r["query_mask"])}_second")) |
                                  ( (int(r["query_mask"]) < 3) & mode_a["target"].str.startswith(f"{str(r["query_mask"])}_"))
                              )]
     
@@ -66,8 +66,8 @@ for i, r in mode_b.iterrows():
                                  (mode_a["image"] == image_id) & 
                                  (mode_a["step"] >= int(r["target_step_start"])) & 
                                  (mode_a["step"] <= int(r["target_step_end"])) & 
-                                 (( (r["match_type"] in ("regular", "fallback")) & mode_a["target"].str.startswith(f"{str(r["query_mask"])}_second")) |
-                                  ( (r["match_type"] == "reversed") & mode_a["target"].str.startswith(f"{str(r["query_mask"])}_first")) |
+                                 (( (r["match_type"] in ("regular", "fuzzy", "fallback")) & mode_a["target"].str.startswith(f"{str(r["query_mask"])}_second")) |
+                                  ( (r["match_type"] in ("reversed", "fuzzy_reversed", "fallback_reversed")) & mode_a["target"].str.startswith(f"{str(r["query_mask"])}_first")) |
                                   ( (int(r["query_mask"]) < 3) & mode_a["target"].str.contains(f"{str(r["query_mask"])}_"))                                  
                                   )]
 
@@ -91,7 +91,7 @@ for i, r in mode_b.iterrows():
         r_fw_mask_id_components = r_fw["target"].split("_")
         out_rows.append({
             "image_id": image_id,
-            "mask_id": f"{r_fw_mask_id_components[0]}_{r_fw_mask_id_components[-1]}",
+            "mask_id": f"{r_fw_mask_id_components[0]}_{r_fw_mask_id_components[-1]}{f'_{r_fw_mask_id_components[1]}' if r_fw_mask_id_components[0] == '3' else ''}",
             "step": r_fw["step"],
             "token_group": r_fw["token"],
             "obj_iou": r_fw["obj_iou"],
@@ -108,7 +108,7 @@ for i, r in mode_b.iterrows():
         r_target_mask_id_components = r_target["target"].split("_")
         out_rows.append({
             "image_id": image_id,
-            "mask_id": f"{r_target_mask_id_components[0]}_{r_target_mask_id_components[-1]}",
+            "mask_id": f"{r_target_mask_id_components[0]}_{r_target_mask_id_components[-1]}{f'_{r_target_mask_id_components[1]}' if r_target_mask_id_components[0] == '3' else ''}",
             "step": r_target["step"],
             "token_group": r_target["token"],
             "obj_iou": r_target["obj_iou"],
