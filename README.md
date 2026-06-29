@@ -4,7 +4,7 @@ Il progetto è suddiviso in quattro notebook, uno per ciascuna fase:
 
 | Fase | Notebook |
 |------|----------|
-| 1 | `Fase_0.ipynb` |
+| 0 | `Fase_0.ipynb` |
 | 2 | `Fase_2.ipynb` |
 | 3 | `Fase_3.ipynb` |
 | 4 | `Fase_4.ipynb` |
