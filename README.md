@@ -11,10 +11,6 @@ Il progetto è suddiviso in quattro notebook, uno per ciascuna fase:
 
 ## Risultati finali
 
-Per riprodurre i risultati finali è sufficiente eseguire il notebook:
-
-```text
-Fase_4.ipynb
-```
+Per riprodurre i risultati finali è sufficiente eseguire il notebook: `Fase_4.ipynb`
 
 Gli altri notebook documentano ed eseguono le fasi intermedie del progetto.
