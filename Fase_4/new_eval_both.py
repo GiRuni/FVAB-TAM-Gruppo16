@@ -484,7 +484,10 @@ def _build_step_word_map(raw_tokens: list, token_labels: list) -> dict:
 
 def _find_target_final_step(step_word_map: dict, target_word: str, token_labels: list) -> tuple:
     """Returns (steps, labels, match_type) where match_type is one of:
-    'regular', 'reversed', 'fallback', 'none'."""
+    'regular' or 'reversed' (all words matched exactly),
+    'fuzzy' or 'fuzzy_reversed' (all words matched, but only partially),
+    'fallback' or 'fallback_reversed' (not all words matched, but at least one did, partially or whole),
+    'none' (no matches, not even partially)."""
     target_n = _norm_word(target_word)
     if not target_n:
         return [-1], [], "none"
