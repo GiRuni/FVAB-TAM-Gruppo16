@@ -1,124 +1,340 @@
-import sys
+"""
+Token Activation Map - Comparison Script
+========================================
+
+Input format:
+
+proposed row
+last_token row
+
+(blank row)
+
+primary_token row
+
+(blank row)
+
+secondary_token row
+
+------------------------------------------------------------
+
+Output:
+    confronto.csv
+    proposed_vs_last_token_pie.png
+    proposed_vs_primary_token_pie.png
+    proposed_vs_secondary_token_pie.png
+"""
+
 import pandas as pd
+import matplotlib.pyplot as plt
+import os
 
-if len(sys.argv) != 4:
-    print("Usage: python compare.py <mode_a.csv> <mode_b.csv> <output.csv>")
-    sys.exit(1)
+# ---------------------------------------------------------------------------
+# 1. FILES
+# ---------------------------------------------------------------------------
 
-mode_a = pd.read_csv(sys.argv[1])
-mode_b = pd.read_csv(sys.argv[2])
-output_path = sys.argv[3]
+INPUT_FILE = "results.csv"
+OUTPUT_DIR = "output"
 
-metric_cols = ["obj_iou", "iou_hard", "io_ratio", "wdp", "func_iou", "f1_iou"]
-header = ["image_id", "mask_id", "step", "token_group"] + metric_cols
+os.makedirs(OUTPUT_DIR, exist_ok=True)
+OUTPUT_FILES = {
+    1: "confronto_object_attribute.csv",
+    2: "confronto_object_action.csv",
+    3: "confronto_spatial_relation.csv",
+}
 
-out_rows = []
+# ---------------------------------------------------------------------------
+# 2. METRICS
+# ---------------------------------------------------------------------------
 
-def _split_query_components(row) -> list[str]:
-    if "query_object" in row and "query_word" in row:
-        obj = str(row["query_object"]).strip() if pd.notna(row["query_object"]) else ""
-        word = str(row["query_word"]).strip() if pd.notna(row["query_word"]) else ""
-        if obj and word:
-            return [obj, word]
+METRICS = [
+    "obj_iou",
+    "iou_hard",
+    "io_ratio",
+    "wdp",
+    "func_iou",
+    "f1_iou",
+]
 
-    pair = str(row.get("query_pair", "")).strip()
-    return [part.strip() for part in pair.split("+") if part.strip()]
+# ---------------------------------------------------------------------------
+# 3. LOAD CSV
+# ---------------------------------------------------------------------------
 
-#mode_b = mode_b[~mode_b["match_type"].str.contains("fallback")]    # Ignora le relazioni con esito "fallback" (match parziale)
+df = pd.read_csv(INPUT_FILE, dtype=str)
 
-for i, r in mode_b.iterrows():
-    if i > 0:
-        out_rows.append({c: "-"*60 for c in header})
+# ---------------------------------------------------------------------------
+# 4. SPLIT INTO RELATION BLOCKS
+# ---------------------------------------------------------------------------
 
-    image_id = r["image"]
+blocks = []
+current = []
 
-    components = _split_query_components(r)
-    pair_label = " + ".join(components) if components else str(r.get("query_pair", ""))
+for _, row in df.iterrows():
 
-    out_rows.append({
-        "image_id": image_id,
-        "mask_id": r["query_mask"],
-        "step": r["target_step_end"],
-        "token_group": pair_label,
-        "obj_iou": r["obj_iou"],
-        "iou_hard": r["iou_hard"],
-        "io_ratio": r["io_ratio"],
-        "wdp": r["wdp"],
-        "func_iou": r["func_iou"],
-        "f1_iou": r["f1_iou"],
-    })
+    image_value = str(row["image_id"])
 
-    matching = mode_a[(mode_a["image"] == image_id) & 
-                      (mode_a["step"] == r["target_step_end"]) & 
-                      (mode_a["target"] == str(r["query_mask"]))]
-    
-    matching_aux_fw = mode_a[(mode_a["target_type"] == "object") & 
-                             (mode_a["image"] == image_id) & 
-                             (mode_a["step"] >= int(r["firstword_step_start"])) & 
-                             (mode_a["step"] <= int(r["firstword_step_end"])) & 
-                             (
-                                 ( (r["match_type"] in ("regular", "fuzzy", "fallback")) & mode_a["target"].str.startswith(f"{str(r["query_mask"])}_first")) |
-                                 ( (r["match_type"] in ("reversed", "fuzzy_reversed", "fallback_reversed")) & mode_a["target"].str.startswith(f"{str(r["query_mask"])}_second")) |
-                                 ( (int(r["query_mask"]) < 3) & mode_a["target"].str.startswith(f"{str(r["query_mask"])}_"))
-                             )]
-    
-    matching_aux_target = mode_a[(mode_a["target_type"] == "object") & 
-                                 (mode_a["image"] == image_id) & 
-                                 (mode_a["step"] >= int(r["target_step_start"])) & 
-                                 (mode_a["step"] <= int(r["target_step_end"])) & 
-                                 (( (r["match_type"] in ("regular", "fuzzy", "fallback")) & mode_a["target"].str.startswith(f"{str(r["query_mask"])}_second")) |
-                                  ( (r["match_type"] in ("reversed", "fuzzy_reversed", "fallback_reversed")) & mode_a["target"].str.startswith(f"{str(r["query_mask"])}_first")) |
-                                  ( (int(r["query_mask"]) < 3) & mode_a["target"].str.contains(f"{str(r["query_mask"])}_"))                                  
-                                  )]
+    # dashed separator row
+    if image_value.startswith("-"):
+        if current:
+            blocks.append(pd.DataFrame(current))
+            current = []
+        continue
 
-    for _, r2 in matching.iterrows():
-        out_rows.append({
-            "image_id": image_id,
-            "mask_id": r2["target"],
-            "step": r2["step"],
-            "token_group": r2["token"],
-            "obj_iou": r2["obj_iou"],
-            "iou_hard": r2["iou_hard"],
-            "io_ratio": r2["io_ratio"],
-            "wdp": r2["wdp"],
-            "func_iou": r2["func_iou"],
-            "f1_iou": r2["f1_iou"],
-        })
+    # blank separator row
+    if pd.isna(row["image_id"]) or image_value == "nan":
+        continue
 
-    if not matching_aux_fw.empty:
-        out_rows.append({c: "" for c in header})
-    for _, r_fw in matching_aux_fw.iterrows():
-        r_fw_mask_id_components = r_fw["target"].split("_")
-        out_rows.append({
-            "image_id": image_id,
-            "mask_id": f"{r_fw_mask_id_components[0]}_{r_fw_mask_id_components[-1]}{f'_{r_fw_mask_id_components[1]}' if r_fw_mask_id_components[0] == '3' else ''}",
-            "step": r_fw["step"],
-            "token_group": r_fw["token"],
-            "obj_iou": r_fw["obj_iou"],
-            "iou_hard": r_fw["iou_hard"],
-            "io_ratio": r_fw["io_ratio"],
-            "wdp": r_fw["wdp"],
-            "func_iou": r_fw["func_iou"],
-            "f1_iou": r_fw["f1_iou"],
-        })
-    
-    if not matching_aux_target.empty:
-        out_rows.append({c: "" for c in header})
-    for _, r_target in matching_aux_target.iterrows():
-        r_target_mask_id_components = r_target["target"].split("_")
-        out_rows.append({
-            "image_id": image_id,
-            "mask_id": f"{r_target_mask_id_components[0]}_{r_target_mask_id_components[-1]}{f'_{r_target_mask_id_components[1]}' if r_target_mask_id_components[0] == '3' else ''}",
-            "step": r_target["step"],
-            "token_group": r_target["token"],
-            "obj_iou": r_target["obj_iou"],
-            "iou_hard": r_target["iou_hard"],
-            "io_ratio": r_target["io_ratio"],
-            "wdp": r_target["wdp"],
-            "func_iou": r_target["func_iou"],
-            "f1_iou": r_target["f1_iou"],
-        })
+    current.append(row)
 
-df_out = pd.DataFrame(out_rows, columns=header)
-df_out.to_csv(output_path, index=False)
-print("Done. Wrote", len(df_out), "rows.")
+if current:
+    blocks.append(pd.DataFrame(current))
+
+print(f"Found {len(blocks)} relation blocks")
+
+# ---------------------------------------------------------------------------
+# 5. EXTRACT PROPOSED / BASELINES
+# ---------------------------------------------------------------------------
+
+row_labels = [
+    "proposed",
+    "last_token",
+    "primary_token",
+    "secondary_token",
+]
+
+frames = {
+    1: {label: [] for label in row_labels},
+    2: {label: [] for label in row_labels},
+    3: {label: [] for label in row_labels},
+}
+
+for block_idx, block in enumerate(blocks):
+
+    # Need at least:
+    # proposed
+    # last token
+    # primary token
+    # secondary token
+    if len(block) < 4:
+        print(
+            f"[WARNING] block {block_idx} has "
+            f"{len(block)} rows (< 4) - skipping."
+        )
+        continue
+
+    # -----------------------------------------------------------------------
+    # BLOCK STRUCTURE
+    #
+    # row 0 = proposed
+    # row 1 = last token baseline
+    # row 2 = primary token baseline
+    # row N = last secondary subtoken baseline
+    #
+    # Example:
+    #
+    # proposed
+    # last_token
+    # primary_token
+    # fr
+    # is
+    # bee
+    #
+    # -> secondary_token = bee
+    # -----------------------------------------------------------------------
+
+    proposed = block.iloc[0]
+    last_token = block.iloc[1]
+    primary = block.iloc[2]
+
+    # keep ONLY the last subtoken
+    secondary = block.iloc[-1]
+
+    relation_type = int(proposed["mask_id"])
+
+    if relation_type not in (1, 2, 3):
+        print(f"[WARNING] Unknown relation type {relation_type}")
+        continue
+
+    sample_id = (
+        f"{proposed['image_id']}_"
+        f"{proposed['mask_id']}"
+    )
+
+    rows = {
+        "proposed": proposed,
+        "last_token": last_token,
+        "primary_token": primary,
+        "secondary_token": secondary,
+    }
+
+    for label, row in rows.items():
+
+        record = {"sample_id": sample_id}
+
+        for metric in METRICS:
+            record[metric] = pd.to_numeric(
+                row[metric],
+                errors="coerce"
+            )
+
+        frames[relation_type][label].append(record)
+
+comparisons = {
+    "proposed_vs_last_token": (
+        "proposed",
+        "last_token",
+    ),
+    "proposed_vs_primary_token": (
+        "proposed",
+        "primary_token",
+    ),
+    "proposed_vs_secondary_token": (
+        "proposed",
+        "secondary_token",
+    ),
+}
+
+relation_names = {
+    1: "object_attribute",
+    2: "object_action",
+    3: "spatial_relation",
+}
+
+for relation_type in (1, 2, 3):
+
+    relation_dir = os.path.join(
+    OUTPUT_DIR,
+    relation_names[relation_type]
+    )
+
+    os.makedirs(relation_dir, exist_ok=True)
+
+    print()
+    print("=" * 70)
+    print(f"Processing {relation_names[relation_type]}")
+    print("=" * 70)
+
+    dfs = {}
+
+    empty = False
+
+    for label in row_labels:
+
+        if len(frames[relation_type][label]) == 0:
+            empty = True
+            break
+
+        dfs[label] = (
+            pd.DataFrame(frames[relation_type][label])
+            .set_index("sample_id")
+        )
+
+    if empty:
+        print("No samples.")
+        continue
+
+    output_rows = []
+
+    for comp_name, (a, b) in comparisons.items():
+
+        diff = dfs[a][METRICS] - dfs[b][METRICS]
+
+        row = {"comparison": comp_name}
+
+        for metric in METRICS:
+            row[f"avg_gain_{metric}"] = diff[metric].mean()
+
+        total_relations = len(diff)
+
+# ------------------------------------------------------------------
+# Equal relations:
+# all metrics must be exactly equal
+# ------------------------------------------------------------------
+
+        equal_mask = (diff[METRICS] == 0).all(axis=1)
+        equal_relations = equal_mask.sum()
+
+        row["equal_relations"] = equal_relations
+        row["total_relations"] = total_relations
+
+        # ------------------------------------------------------------------
+        # Statistics for every metric
+        # ------------------------------------------------------------------
+
+        for metric in METRICS:
+
+            better_relations = (diff[metric] > 0).sum()
+            worse_relations = (diff[metric] < 0).sum()
+
+            row[f"proposed_{metric}_better"] = (
+                f"{100 * better_relations / total_relations:.2f}%"
+                if total_relations > 0 else "0.00%"
+            )
+
+            row[f"proposed_{metric}_equal"] = (
+                f"{100 * equal_relations / total_relations:.2f}%"
+                if total_relations > 0 else "0.00%"
+            )
+
+            row[f"proposed_{metric}_worse"] = (
+                f"{100 * worse_relations / total_relations:.2f}%"
+                if total_relations > 0 else "0.00%"
+            )
+
+            row[f"{metric}_better_relations"] = better_relations
+            row[f"{metric}_worse_relations"] = worse_relations
+
+            plt.figure(figsize=(6, 6))
+
+            plt.pie(
+                [
+                    better_relations,
+                    equal_relations,
+                    worse_relations,
+                ],
+                labels=[
+                    f"Better\n({better_relations})",
+                    f"Equal\n({equal_relations})",
+                    f"Worse\n({worse_relations})",
+                ],
+                autopct="%1.1f%%",
+            )
+
+            plt.title(
+                f"{relation_names[relation_type]}\n"
+                f"{comp_name.replace('_', ' ').title()}\n"
+                f"{metric}"
+            )
+
+            filename = f"{comp_name}_{metric}_pie.png"
+
+            filepath = os.path.join(
+                relation_dir,
+                filename
+            )
+
+            plt.savefig(
+                filepath,
+                bbox_inches="tight"
+            )
+
+            print(f"Saved {filepath}")
+
+            plt.close()
+
+            print(f"Saved {filename}")
+
+        output_rows.append(row)
+
+    output = pd.DataFrame(output_rows)
+
+    output.set_index("comparison", inplace=True)
+
+    output_path = os.path.join(
+    relation_dir,
+    OUTPUT_FILES[relation_type]
+)
+
+    output.to_csv(output_path)
+
+    print(f"Saved {output_path}")
+    print(output)
