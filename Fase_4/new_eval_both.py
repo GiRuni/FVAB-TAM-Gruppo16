@@ -803,8 +803,7 @@ def evaluate_image_mode_b(ctx: dict, obj_masks: dict, spatial_cfg: dict,
                     "match_type": match_type,
                 }
 
-            preserve_words = [obj_name]
-            preserve_words.extend(matched_labels[:-1])
+            preserve_words = matched_labels
             preserve_words = list(dict.fromkeys(w for w in preserve_words if w))
             print(f"Running query for image {stem}, target '{relation_expr}' "
                   f"-> step {target_step}, preserve words: {preserve_words}")
