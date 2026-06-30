@@ -37,6 +37,7 @@ OUTPUT_DIR = "output"
 
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 OUTPUT_FILES = {
+    "all": "confronto_all_relations.csv",
     1: "confronto_object_attribute.csv",
     2: "confronto_object_action.csv",
     3: "confronto_spatial_relation.csv",
@@ -102,6 +103,7 @@ row_labels = [
 ]
 
 frames = {
+    "all": {label: [] for label in row_labels},
     1: {label: [] for label in row_labels},
     2: {label: [] for label in row_labels},
     3: {label: [] for label in row_labels},
@@ -168,7 +170,11 @@ for block_idx, block in enumerate(blocks):
 
     for label, row in rows.items():
 
-        record = {"sample_id": sample_id}
+        record = {
+            "sample_id": sample_id,
+            "image_id": proposed["image_id"],
+            "mask_id": proposed["mask_id"],
+        }
 
         for metric in METRICS:
             record[metric] = pd.to_numeric(
@@ -177,6 +183,7 @@ for block_idx, block in enumerate(blocks):
             )
 
         frames[relation_type][label].append(record)
+        frames["all"][label].append(record)
 
 comparisons = {
     "proposed_vs_last_token": (
@@ -194,17 +201,24 @@ comparisons = {
 }
 
 relation_names = {
+    "all": "all_relations",
     1: "object_attribute",
     2: "object_action",
     3: "spatial_relation",
 }
 
-for relation_type in (1, 2, 3):
+for relation_type in relation_names:
 
     relation_dir = os.path.join(
     OUTPUT_DIR,
     relation_names[relation_type]
     )
+
+    pie_dir = os.path.join(relation_dir, "pie")
+    hist_dir = os.path.join(relation_dir, "histograms")
+
+    os.makedirs(pie_dir, exist_ok=True)
+    os.makedirs(hist_dir, exist_ok=True)
 
     os.makedirs(relation_dir, exist_ok=True)
 
@@ -233,15 +247,43 @@ for relation_type in (1, 2, 3):
         continue
 
     output_rows = []
+    q1_rows = []
+    median_rows = []
+    q3_rows = []
 
     for comp_name, (a, b) in comparisons.items():
 
         diff = dfs[a][METRICS] - dfs[b][METRICS]
 
+        q1_row = {"comparison": comp_name}
+        median_row = {"comparison": comp_name}
+        q3_row = {"comparison": comp_name}
+
+        # relazione con il massimo gain di F1
+        best_idx = diff["f1_iou"].idxmax()
+
+        best_gain = diff.loc[best_idx, "f1_iou"]
+
+        best_image = dfs[a].loc[best_idx, "image_id"]
+        best_mask = dfs[a].loc[best_idx, "mask_id"]
+
+        print(
+            f"[{relation_names[relation_type]}] "
+            f"{comp_name}: "
+            f"best F1 gain = {best_gain:.4f} "
+            f"(image_id={best_image}, mask_id={best_mask})"
+        )
+
         row = {"comparison": comp_name}
 
         for metric in METRICS:
-            row[f"avg_gain_{metric}"] = diff[metric].mean()
+            values = diff[metric].dropna()
+
+            row[f"avg_gain_{metric}"] = values.mean()
+
+            q1_row[metric] = values.quantile(0.25)
+            median_row[metric] = values.median()
+            q3_row[metric] = values.quantile(0.75)
 
         total_relations = len(diff)
 
@@ -323,7 +365,46 @@ for relation_type in (1, 2, 3):
 
             print(f"Saved {filename}")
 
+            plt.figure(figsize=(8,5))
+
+            plt.hist(
+                values,
+                bins=20,
+            )
+
+            plt.xlabel(f"Gain ({metric})")
+            plt.ylabel("Number of relations")
+
+            plt.title(
+                f"{relation_names[relation_type]}\n"
+                f"{comp_name.replace('_',' ').title()}\n"
+                f"{metric}"
+            )
+
+            plt.grid(axis="y", alpha=0.3)
+
+            hist_filename = (
+                f"{comp_name}_{metric}_hist.png"
+            )
+
+            hist_filepath = os.path.join(
+                hist_dir,
+                hist_filename,
+            )
+
+            plt.savefig(
+                hist_filepath,
+                bbox_inches="tight",
+            )
+
+            plt.close()
+
+            print(f"Saved {hist_filepath}")
+
         output_rows.append(row)
+        q1_rows.append(q1_row)
+        median_rows.append(median_row)
+        q3_rows.append(q3_row)
 
     output = pd.DataFrame(output_rows)
 
@@ -335,6 +416,17 @@ for relation_type in (1, 2, 3):
 )
 
     output.to_csv(output_path)
+    q1_df = pd.DataFrame(q1_rows).set_index("comparison")
+    median_df = pd.DataFrame(median_rows).set_index("comparison")
+    q3_df = pd.DataFrame(q3_rows).set_index("comparison")
+
+    q1_df.to_csv(os.path.join(relation_dir, "q1.csv"))
+    median_df.to_csv(os.path.join(relation_dir, "median.csv"))
+    q3_df.to_csv(os.path.join(relation_dir, "q3.csv"))
+
+    print(f"Saved {os.path.join(relation_dir, 'q1.csv')}")
+    print(f"Saved {os.path.join(relation_dir, 'median.csv')}")
+    print(f"Saved {os.path.join(relation_dir, 'q3.csv')}")
 
     print(f"Saved {output_path}")
     print(output)
